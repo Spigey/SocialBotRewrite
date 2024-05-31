@@ -1,9 +1,16 @@
 package spigey.bot.system;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Scanner;
 
 public class sys {
@@ -63,8 +70,12 @@ public class sys {
         }
     }
     public static void errInfo(Exception L){
-        error(L.getMessage());
-        error(L.getStackTrace());
+        StringBuilder err = new StringBuilder(L + "\n   ");
+        for(int i = 0; i < L.getStackTrace().length - 1; i++){
+            err.append(L.getStackTrace()[i]).append("\n   ");
+        }
+        err.append(L.getStackTrace()[L.getStackTrace().length - 1]);
+        error(err);
     }
 
     public static long getTime() {
@@ -101,5 +112,29 @@ public class sys {
 
     public static void warn(Object content) {
         ln("\u001B[43;30m[WARN]: " + content + "\u001B[0m");
+    }
+
+    public static String encrypt(String text, String encryptionKey) throws Exception {
+        SecretKey secretKey = generateKey(encryptionKey);
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        byte[] encryptedBytes = cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(encryptedBytes);
+    }
+
+    public static String decrypt(String encryptedText, String encryptionKey) throws Exception {
+        SecretKey secretKey = generateKey(encryptionKey);
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
+        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+        return new String(decryptedBytes, StandardCharsets.UTF_8);
+    }
+
+    private static SecretKey generateKey(String encryptionKey) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] keyBytes = encryptionKey.getBytes(StandardCharsets.UTF_8);
+        byte[] hashedBytes = digest.digest(keyBytes);
+        return new SecretKeySpec(hashedBytes, "AES");
     }
 }
