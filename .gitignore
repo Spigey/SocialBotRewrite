@@ -26,3 +26,8 @@ src/main/java/spigey/bot/system/env.*
 /.idea/
 .idea/
 src/main/java/spigey/bot/system/database/*
+src/main/java/spigey/bot/system/database/*.json
+src/main/java/spigey/bot/system/database/database.*
+src/main/java/spigey/bot/system/database/database.json
+src/main/java/spigey/bot/system/database/
+database.*
