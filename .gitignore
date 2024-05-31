@@ -25,3 +25,4 @@ env.*
 src/main/java/spigey/bot/system/env.*
 /.idea/
 .idea/
+src/main/java/spigey/bot/system/database/*
