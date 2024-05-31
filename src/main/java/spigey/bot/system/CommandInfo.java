@@ -16,4 +16,5 @@ public @interface CommandInfo {
     long cooldown() default 0;
     String slashCommand() default "";
     boolean restrict() default true;
+    String buttonId() default "";
 }

@@ -1,6 +1,7 @@
 package spigey.bot.system;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.io.File;
@@ -9,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static spigey.bot.DiscordBot.prefix;
 import static spigey.bot.system.sys.errInfo;
@@ -100,7 +102,7 @@ public class CommandHandler {
                         return;
                     }
 
-                    command.execute(event, args);
+                    command.execute(event, event.getMessage().getContentRaw().split(" "));
 
                     // Update cooldown after successful execution
                     if (cooldownManager != null) {
@@ -146,8 +148,8 @@ public class CommandHandler {
                     event.reply("You have to wait " + remainingCooldown + " before using this command again.").setEphemeral(true).queue();
                     return;
                 }
-
-                boolean success = command.slashCommand(event) == 1;
+                boolean success = false;
+                if(Objects.equals(db.read(event.getUser().getId(), "banned"), "0")) success = command.slashCommand(event) == 1;
 
                 // Update cooldown after successful execution
                 if (cooldownManager != null) {
@@ -158,6 +160,42 @@ public class CommandHandler {
             errInfo(e);
         }
     }
+
+
+    public void onButton(ButtonInteractionEvent event){
+        Command command = null;
+        try {
+            for (File file : files) {
+                if (file.getName().endsWith(".class")) {
+                    Class<?> cls = Class.forName("spigey.bot.Commands." + file.getName().replace(".class", ""));
+                    if (cls.isAnnotationPresent(CommandInfo.class)) {
+                        CommandInfo info = cls.getAnnotation(CommandInfo.class);
+                        if (info.buttonId().equalsIgnoreCase(event.getComponentId())) {
+                            command = (Command) cls.getDeclaredConstructor().newInstance();
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch(Exception L){
+            errInfo(L);
+        }
+        if (command == null){
+            event.reply("Fatal error").setEphemeral(true).queue();
+            return;
+        }
+        try {
+            if (command.getClass().isAnnotationPresent(CommandInfo.class)) {
+                CommandInfo info = command.getClass().getAnnotation(CommandInfo.class);
+                if (info.limitIds().length > 0 && !Arrays.asList(info.limitIds()).contains(event.getUser().getId())) {event.getChannel().sendMessage(info.limitMsg()).queue(); return;}
+                if(Objects.equals(db.read(event.getUser().getId(), "banned"), "0")) command.button(event);
+            }
+        } catch (Exception e) {
+            errInfo(e);
+        }
+    }
+
+
 
     public void onMessageReceived(MessageReceivedEvent event) throws Exception {
         doTheActualShit(event);

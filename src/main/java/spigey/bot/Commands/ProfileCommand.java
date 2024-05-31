@@ -19,7 +19,7 @@ public class ProfileCommand implements Command {
         if(event.getGuild() == null){event.reply("Commands are disabled in DMs, tough luck mguy").queue(); return 0;}
         if(Objects.equals(db.read(event.getUser().getId(), "account"), "0")){event.reply("You need to be registered to use this command!").setEphemeral(true).queue(); return 0;}
         String user = db.read(event.getUser().getId(), "account");
-        try{user = event.getOption("username").getAsString();}catch(Exception e){/* not empty */}
+        try{if(!Objects.equals(db.read("passwords", "password_" + event.getOption("username").getAsString()), "0"))user = event.getOption("username").getAsString();}catch(Exception e){/* not empty */}
         MessageEmbed embed = new EmbedBuilder()
                 .setTitle(String.format("%s's Profile", user))
                 .setDescription(String.format("**Posts:**%s", db.read("posts", user, "\nThis user has not posted yet."))).build();

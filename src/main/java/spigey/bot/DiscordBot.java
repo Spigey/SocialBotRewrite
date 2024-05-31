@@ -2,12 +2,15 @@ package spigey.bot;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONObject;
@@ -25,6 +28,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static spigey.bot.system.util.*;
 import static spigey.bot.system.util.msg;
@@ -65,6 +70,11 @@ public class DiscordBot extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
+        try {
+            if (event.getGuild().getId().equals("1219338270773874729"))
+                if (Objects.equals(((TextChannel) event.getChannel()).getParentCategoryId(), "1246077622522351626") && !event.getAuthor().getId().equals(event.getJDA().getSelfUser().getId()))
+                    event.getMessage().delete().queue();
+        }catch(Exception a){/* not empty*/}
         BotOwner = event.getJDA().retrieveApplicationInfo().complete().getOwner().getId();
         try {
             commandHandler.onMessageReceived(event);
@@ -77,7 +87,7 @@ public class DiscordBot extends ListenerAdapter {
             err.append(e.getStackTrace()[e.getStackTrace().length - 1]);
             error("A critical has occurred while executing Command:\n" + e + "\nMessage: " + event.getMessage().getContentRaw(), false);
             msg("A critical error occurred while executing Command: ```" + (err.toString().length() > 1000 ? err.substring(0, 1000) + "..." : err.toString()) + "```\nThis error has been automatically reported.");
-            TextChannel channel = event.getJDA().getGuildById("1211627879243448340").getTextChannelById("1245302943951880303");
+            TextChannel channel = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246091381659668521");
             MessageEmbed embed = new EmbedBuilder()
                     .setTitle("Error Report")
                     .setDescription(String.format("Message: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`",event.getMessage().getContentRaw(), event.getAuthor().getName() + "#" + event.getAuthor().getDiscriminator(), event.getAuthor().getId()))
@@ -107,7 +117,7 @@ public class DiscordBot extends ListenerAdapter {
             err.append(e.getStackTrace()[e.getStackTrace().length - 1]);
             error("A critical has occurred while executing Slash Command:\n" + e + "\nMessage: " + event.getName(), false);
             event.reply("A critical error occurred while executing Slash Command: ```" + (err.toString().length() > 1000 ? err.substring(0, 1000) + "..." : err.toString()) + "```\nThis error has been automatically reported.").queue();
-            TextChannel channel = event.getJDA().getGuildById("1211627879243448340").getTextChannelById("1245302943951880303");
+            TextChannel channel = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246091381659668521");
             MessageEmbed embed = new EmbedBuilder()
                     .setTitle("Error Report")
                     .setDescription(String.format("Message: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`",event.getName(), event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()))
@@ -123,5 +133,10 @@ public class DiscordBot extends ListenerAdapter {
             }
             event.reply("<@" + event.getJDA().retrieveApplicationInfo().complete().getOwner().getId() + ">").addEmbeds(embed).addFiles(FileUpload.fromData(err.toString().getBytes(StandardCharsets.UTF_8), "error_report.txt")).queue();
         }
+    }
+
+    @Override
+    public void onButtonInteraction(ButtonInteractionEvent event) {
+        commandHandler.onButton(event);
     }
 }
