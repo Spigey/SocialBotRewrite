@@ -1,12 +1,11 @@
 package spigey.bot.system;
 
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +18,7 @@ public class CommandHandler {
     private final Map<String, Command> commands = new HashMap<>();
     private final Map<String, String> aliasToCommandMap = new HashMap<>();
     private final Map<String, CooldownManager> cooldownManagers = new HashMap<>();
+    private File[] files;
 
     public CommandHandler() {
         loadCommands();
@@ -28,7 +28,7 @@ public class CommandHandler {
         try {
             debug("Registering commands", false);
             String path = "spigey/bot/Commands";
-            File[] files = new File(getClass().getClassLoader().getResource(path).getFile()).listFiles((dir, name) -> name.endsWith(".class"));
+            files = new File(getClass().getClassLoader().getResource(path).getFile()).listFiles((dir, name) -> name.endsWith(".class"));
             if (files == null) return;
 
             for (File file : files) {
@@ -67,6 +67,10 @@ public class CommandHandler {
         loadCommands();
     }
 
+    public CooldownManager getCooldownManager(String commandName) {
+        return cooldownManagers.get(commandName);
+    }
+
     public void doTheActualShit(MessageReceivedEvent event) throws IOException {
         String[] split = event.getMessage().getContentRaw().split(" ");
         if (!split[0].startsWith(prefix)) return;
@@ -94,15 +98,64 @@ public class CommandHandler {
                         String remainingCooldown = cooldownManager.parse(event.getAuthor());
                         event.getChannel().sendMessage("You have to wait " + remainingCooldown + " before using this command again.").queue();
                         return;
-                    } else if (cooldownManager != null) {
+                    }
+
+                    command.execute(event, args);
+
+                    // Update cooldown after successful execution
+                    if (cooldownManager != null) {
                         cooldownManager.update(event.getAuthor());
                     }
                 }
-
-                command.execute(event, args);
             } catch (Exception e) {
                 errInfo(e);
             }
+        }
+    }
+
+    public void onSlashCommand(SlashCommandInteractionEvent event){
+        Command command = null;
+        try {
+            for (File file : files) {
+                if (file.getName().endsWith(".class")) {
+                    Class<?> cls = Class.forName("spigey.bot.Commands." + file.getName().replace(".class", ""));
+                    if (cls.isAnnotationPresent(CommandInfo.class)) {
+                        CommandInfo info = cls.getAnnotation(CommandInfo.class);
+                        if (info.slashCommand().equalsIgnoreCase(event.getName())) {
+                            command = (Command) cls.getDeclaredConstructor().newInstance();
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch(Exception L){
+            errInfo(L);
+        }
+        if (command == null){
+            event.reply("Due to my bad command handler, the command was not found. Please report this bug.").setEphemeral(true).queue();
+            sys.error("Slash Command not found: /" + event.getName().toLowerCase());
+            return;
+        }
+        try {
+            if (command.getClass().isAnnotationPresent(CommandInfo.class)) {
+                CommandInfo info = command.getClass().getAnnotation(CommandInfo.class);
+                if (info.limitIds().length > 0 && !Arrays.asList(info.limitIds()).contains(event.getUser().getId())) {event.getChannel().sendMessage(info.limitMsg()).queue(); return;}
+                CooldownManager cooldownManager = cooldownManagers.get(command.getClass().getSimpleName().toLowerCase().replace("command", ""));
+                if (cooldownManager != null && cooldownManager.isActive(event.getUser())) {
+                    String remainingCooldown = cooldownManager.parse(event.getUser());
+                    event.reply("You have to wait " + remainingCooldown + " before using this command again.").setEphemeral(true).queue();
+                    return;
+                }
+
+                boolean success = command.slashCommand(event) == 1;
+
+                // Update cooldown after successful execution
+                if (cooldownManager != null) {
+                    if(success) cooldownManager.update(event.getUser());
+                }
+            }
+        } catch (Exception e) {
+            errInfo(e);
         }
     }
 
