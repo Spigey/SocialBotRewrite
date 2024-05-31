@@ -14,4 +14,6 @@ public @interface CommandInfo {
     String description() default "";
     String limitMsg() default "You are not allowed to use this command!";
     long cooldown() default 0;
+    String slashCommand() default "";
+    boolean restrict() default true;
 }
