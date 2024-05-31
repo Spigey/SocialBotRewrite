@@ -1,13 +1,12 @@
 package spigey.bot.system;
 
-import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class CooldownManager {
-    private final Map<String, Long> cooldowns; // Map to store cooldown timestamps (user ID or guild ID to timestamp)
+    public final Map<String, Long> cooldowns; // Map to store cooldown timestamps (user ID or guild ID to timestamp)
     private final long cooldownDurationMillis; // Cooldown duration in milliseconds
 
     public CooldownManager(long cooldownDurationMillis) {
@@ -15,18 +14,18 @@ public class CooldownManager {
         this.cooldownDurationMillis = cooldownDurationMillis;
     }
 
-    public boolean isActive(User member) {
-        String key = member.getId(); // Use member ID as the key in the cooldowns map
-        return !(!cooldowns.containsKey(key) || System.currentTimeMillis() - cooldowns.get(key) >= cooldownDurationMillis);
+    public boolean isActive(User user) {
+        String key = user.getId(); // Use user ID as the key in the cooldowns map
+        return cooldowns.containsKey(key) && System.currentTimeMillis() - cooldowns.get(key) < cooldownDurationMillis;
     }
 
-    public void update(User member) {
-        String key = member.getId(); // Use member ID as the key in the cooldowns map
+    public void update(User user) {
+        String key = user.getId(); // Use user ID as the key in the cooldowns map
         cooldowns.put(key, System.currentTimeMillis());
     }
 
-    public String parse(User member) {
-        String key = member.getId(); // Use member ID as the key in the cooldowns map
+    public String parse(User user) {
+        String key = user.getId(); // Use user ID as the key in the cooldowns map
         if (cooldowns.containsKey(key)) {
             long currentTime = System.currentTimeMillis();
             long lastExecutionTime = cooldowns.get(key);
@@ -57,5 +56,9 @@ public class CooldownManager {
         } else {
             return "No cooldown";
         }
+    }
+
+    public void reset(User user) {
+        cooldowns.remove(user.getId());
     }
 }
