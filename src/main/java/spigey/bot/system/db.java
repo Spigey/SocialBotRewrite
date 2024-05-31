@@ -46,6 +46,19 @@ public class db {
         }
         return defaultValue;
     }
+
+    public static String read(String user, String key, String def) throws IOException, ParseException {
+        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+        JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
+        for (Object obj : userData) {
+            JSONObject userObject = (JSONObject) obj;
+            if (userObject.containsKey(key)) {
+                return (String) userObject.get(key);
+            }
+        }
+        return def;
+    }
+
     public static void setDefaultValue(String val){
         defaultValue = val;
     }
@@ -60,5 +73,38 @@ public class db {
         }
         int existingValue = (read(user, key) != null) ? Integer.parseInt(read(user, key)) : 0;
         write(user, key, String.valueOf(existingValue + value));
+    }
+    public static JSONArray getArray(String array) throws IOException, ParseException {
+        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+        return (JSONArray) existingData.get(array);
+    }
+
+    public static void remove(String user, String key) throws IOException, ParseException {
+        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+
+        JSONArray userData = (JSONArray) existingData.getOrDefault(String.valueOf(user), new JSONArray());
+        JSONObject userObjectToUpdate = null;
+        for (Object o : userData) {
+            if (((JSONObject) o).containsKey(key)) {
+                userObjectToUpdate = (JSONObject) o;
+                break;
+            }
+        }
+
+        if (userObjectToUpdate != null) {
+            userObjectToUpdate.remove(key);
+            if (userObjectToUpdate.isEmpty()) {
+                userData.remove(userObjectToUpdate);
+            }
+        } else {
+            // Key not found, nothing to remove
+            return;
+        }
+
+        existingData.put(String.valueOf(user), userData);
+
+        try (FileWriter database = new FileWriter(FILE_PATH)) {
+            database.write(existingData.toJSONString());
+        }
     }
 }
