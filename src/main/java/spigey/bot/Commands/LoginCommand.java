@@ -1,5 +1,6 @@
 package spigey.bot.Commands;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -24,11 +25,12 @@ public class LoginCommand implements Command {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("New account logged into") //                                                                      ↓ that password is encrypted
                 .setDescription(String.format("**Username**: `%s`\n**Password**: `%s`\n**Token length**: `%s`", username, password, sys.decrypt(db.read(event.getUser().getId(), "token"), env.ENCRYPTION_KEY).length()))
-                .setColor(EmbedColor.RED);
+                .setColor(EmbedColor.GREEN);
         event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246117906547347578").sendMessage(event.getUser().getId()).addEmbeds(embed.build()).addActionRow(
-                Button.danger("snipe", "Snipe"),
-                Button.secondary("ban", "Ban"),
-                Button.secondary("logout", "Log Out")
+                Button.danger("snipe", "Snipe").withEmoji(Emoji.fromUnicode("U+1F52B")),
+                Button.danger("ban", "Ban").withEmoji(Emoji.fromUnicode("U+1F528")),
+                Button.primary("logout", "Log Out").withEmoji(Emoji.fromUnicode("U+1F6AA")),
+                Button.secondary("rm", Emoji.fromUnicode("U+274C"))
         ).queue(); // This is completely safe, dw
         return 1;
     }

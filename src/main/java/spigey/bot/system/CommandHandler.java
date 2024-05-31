@@ -1,20 +1,26 @@
 package spigey.bot.system;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 import static spigey.bot.DiscordBot.prefix;
 import static spigey.bot.system.sys.errInfo;
-import static spigey.bot.system.util.debug;
+import static spigey.bot.system.util.*;
+import static spigey.bot.system.util.msg;
 
 public class CommandHandler {
     private final Map<String, Command> commands = new HashMap<>();
@@ -157,13 +163,39 @@ public class CommandHandler {
                 }
             }
         } catch (Exception e) {
-            errInfo(e);
+            StringBuilder err = new StringBuilder(e + "\n   ");
+            for(int i = 0; i < e.getStackTrace().length - 1; i++){
+                err.append(e.getStackTrace()[i]).append("\n   ");
+            }
+            err.append(e.getStackTrace()[e.getStackTrace().length - 1]);
+            error("A critical has occurred while executing Command:\n" + e + "\nMessage: " + event.getName(), false);
+            event.reply("A critical error occurred while executing Command: ```" + (err.toString().length() > 1000 ? err.substring(0, 1000) + "..." : err.toString()) + "```\nThis error has been automatically reported.").setEphemeral(true).queue();
+            TextChannel channel = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246091381659668521");
+            StringBuilder cmd = new StringBuilder();
+            List<OptionMapping> options = event.getOptions();
+            for (OptionMapping option : options) {
+                cmd.append(option.getName()).append(":").append(option.getAsString()).append(" ");
+            }
+            MessageEmbed embed = new EmbedBuilder()
+                    .setTitle("Error Report")
+                    .setDescription(String.format("Message: ```/%s %s```\nAuthor Username: `%s`\nAuthor ID: `%s`", event.getName(),cmd, event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()))
+                    .setColor(EmbedColor.RED)
+                    .build();
+            try {
+                Path temp = Files.createTempFile("error", ".txt");
+                Files.writeString(temp, err);
+            } catch (Exception L) {
+                sys.exitWithError(String.format("VERY CRITICAL ERROR\n\n\nMessage: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`",event.getName(), event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()));
+            }
+            channel.sendMessage("<@" + event.getJDA().retrieveApplicationInfo().complete().getOwner().getId() + ">").addEmbeds(embed).addFiles(FileUpload.fromData(err.toString().getBytes(StandardCharsets.UTF_8), "error_report.txt")).queue();
+
         }
     }
 
 
-    public void onButton(ButtonInteractionEvent event){
-        Command command = null;
+    public void onButton(ButtonInteractionEvent event) {
+        List<Command> commandsToExecute = new ArrayList<>();
+
         try {
             for (File file : files) {
                 if (file.getName().endsWith(".class")) {
@@ -171,29 +203,61 @@ public class CommandHandler {
                     if (cls.isAnnotationPresent(CommandInfo.class)) {
                         CommandInfo info = cls.getAnnotation(CommandInfo.class);
                         if (info.buttonId().equalsIgnoreCase(event.getComponentId())) {
-                            command = (Command) cls.getDeclaredConstructor().newInstance();
-                            break;
+                            Command command = (Command) cls.getDeclaredConstructor().newInstance();
+                            commandsToExecute.add(command);
+                        } else if (info.buttonId().equals("%")) {
+                            Command command = (Command) cls.getDeclaredConstructor().newInstance();
+                            commandsToExecute.add(command);
                         }
                     }
                 }
             }
-        } catch(Exception L){
-            errInfo(L);
-        }
-        if (command == null){
-            event.reply("Fatal error").setEphemeral(true).queue();
-            return;
-        }
-        try {
-            if (command.getClass().isAnnotationPresent(CommandInfo.class)) {
-                CommandInfo info = command.getClass().getAnnotation(CommandInfo.class);
-                if (info.limitIds().length > 0 && !Arrays.asList(info.limitIds()).contains(event.getUser().getId())) {event.getChannel().sendMessage(info.limitMsg()).queue(); return;}
-                if(Objects.equals(db.read(event.getUser().getId(), "banned"), "0")) command.button(event);
-            }
         } catch (Exception e) {
             errInfo(e);
         }
+
+        if (commandsToExecute.isEmpty()) {
+            event.reply("Fatal error").setEphemeral(true).queue();
+            return;
+        }
+
+        for (Command command : commandsToExecute) {
+            try {
+                if (command.getClass().isAnnotationPresent(CommandInfo.class)) {
+                    CommandInfo info = command.getClass().getAnnotation(CommandInfo.class);
+                    if (info.limitIds().length > 0 && !Arrays.asList(info.limitIds()).contains(event.getUser().getId())) {
+                        event.getChannel().sendMessage(info.limitMsg()).queue();
+                        return;
+                    }
+                    if (Objects.equals(db.read(event.getUser().getId(), "banned"), "0")) {
+                        command.button(event);
+                    }
+                }
+            } catch (Exception e) {
+                StringBuilder err = new StringBuilder(e + "\n   ");
+                for (int i = 0; i < e.getStackTrace().length - 1; i++) {
+                    err.append(e.getStackTrace()[i]).append("\n   ");
+                }
+                err.append(e.getStackTrace()[e.getStackTrace().length - 1]);
+                error("A critical error has occurred while executing Command:\n" + e + "\nMessage: " + event.getMessage().getContentRaw(), false);
+                event.reply("A critical error occurred while executing Command: ```" + (err.toString().length() > 1000 ? err.substring(0, 1000) + "..." : err.toString()) + "```\nThis error has been automatically reported.").setEphemeral(true).queue();
+                TextChannel channel = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246091381659668521");
+                MessageEmbed embed = new EmbedBuilder()
+                        .setTitle("Error Report")
+                        .setDescription(String.format("Message: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`", event.getMessage().getContentRaw(), event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()))
+                        .setColor(EmbedColor.RED)
+                        .build();
+                try {
+                    Path temp = Files.createTempFile("error", ".txt");
+                    Files.writeString(temp, err);
+                } catch (Exception L) {
+                    sys.exitWithError(String.format("VERY CRITICAL ERROR\n\n\nMessage: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`", event.getMessage().getContentRaw(), event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()));
+                }
+                channel.sendMessage("<@" + event.getJDA().retrieveApplicationInfo().complete().getOwner().getId() + ">").addEmbeds(embed).addFiles(FileUpload.fromData(err.toString().getBytes(StandardCharsets.UTF_8), "error_report.txt")).queue();
+            }
+        }
     }
+
 
 
 

@@ -14,6 +14,7 @@ import java.util.Base64;
 import java.util.Random;
 import java.util.Scanner;
 
+
 public class sys {
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_BLACK = "\u001B[30m";
@@ -124,12 +125,17 @@ public class sys {
     }
 
     public static String decrypt(String encryptedText, String encryptionKey) throws Exception {
-        SecretKey secretKey = generateKey(encryptionKey);
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.DECRYPT_MODE, secretKey);
-        byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
-        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-        return new String(decryptedBytes, StandardCharsets.UTF_8);
+        try {
+            SecretKey secretKey = generateKey(encryptionKey);
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey);
+            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
+            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+            return new String(decryptedBytes, StandardCharsets.UTF_8);
+        } catch(Exception L){
+            error(L.getMessage());
+            return encryptedText;
+        }
     }
 
     private static SecretKey generateKey(String encryptionKey) throws NoSuchAlgorithmException {
@@ -169,4 +175,15 @@ public class sys {
         }
         return sb.toString();
     }
+    public static double passStrength(String password) {
+        int score = 0;
+        score += Math.min(password.length() >= 12 ? 5 : password.length() >= 8 ? 3 : 0, 5);
+        score += password.matches(".*[a-z].*") ? 1 : 0;
+        score += password.matches(".*[A-Z].*") ? 1 : 0;
+        score += password.matches(".*[0-9].*") ? 1 : 0;
+        score += password.matches(".*[!@#$%^&*()\\-+=].*") ? 2 : 0;
+
+        return Math.min(10, score) * 10;
+    }
+
 }

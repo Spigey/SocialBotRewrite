@@ -1,9 +1,10 @@
 package spigey.bot.system;
-import org.json.simple.*;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,7 +21,7 @@ public class db {
     public static void write(String user, String key, String value) throws IOException, ParseException {
         JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
 
-        JSONArray userData = (JSONArray) existingData.getOrDefault(String.valueOf(user), new JSONArray());
+        JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
         JSONObject userObjectToUpdate = null;
         for (Object o : userData) {
             if (((JSONObject) o).containsKey(key)) {
@@ -29,9 +30,13 @@ public class db {
             }
         }
 
-        if (userObjectToUpdate != null) {userObjectToUpdate.put(key, value);} else { userData.add(new JSONObject() {{ put(key, value); }});}
+        if (userObjectToUpdate != null) {
+            userObjectToUpdate.put(key, value);
+        } else {
+            userData.add(new JSONObject() {{ put(key, value); }});
+        }
 
-        existingData.put(String.valueOf(user), userData);
+        existingData.put(user, userData);
 
         try (FileWriter database = new FileWriter(FILE_PATH)) {
             database.write(existingData.toJSONString());
@@ -62,14 +67,16 @@ public class db {
         return def;
     }
 
-    public static void setDefaultValue(String val){
+    public static void setDefaultValue(String val) {
         defaultValue = val;
     }
-    public static String getDefaultValue(){
+
+    public static String getDefaultValue() {
         return defaultValue;
     }
+
     public static void add(String user, String key, int value) throws IOException, ParseException {
-        if(Objects.equals(read(user, key), getDefaultValue())){
+        if (Objects.equals(read(user, key), getDefaultValue())) {
             log("Adding key " + key + " to user " + user);
             write(user, key, String.valueOf(value));
             return;
@@ -77,6 +84,7 @@ public class db {
         int existingValue = (read(user, key) != null) ? Integer.parseInt(read(user, key)) : 0;
         write(user, key, String.valueOf(existingValue + value));
     }
+
     public static JSONArray getArray(String array) throws IOException, ParseException {
         JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
         return (JSONArray) existingData.get(array);
@@ -85,7 +93,7 @@ public class db {
     public static void remove(String user, String key) throws IOException, ParseException {
         JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
 
-        JSONArray userData = (JSONArray) existingData.getOrDefault(String.valueOf(user), new JSONArray());
+        JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
         JSONObject userObjectToUpdate = null;
         for (Object o : userData) {
             if (((JSONObject) o).containsKey(key)) {
@@ -104,12 +112,17 @@ public class db {
             return;
         }
 
-        existingData.put(String.valueOf(user), userData);
+        if (userData.isEmpty()) {
+            existingData.remove(user);
+        } else {
+            existingData.put(user, userData);
+        }
 
         try (FileWriter database = new FileWriter(FILE_PATH)) {
             database.write(existingData.toJSONString());
         }
     }
+
     public static String get() throws Exception {
         return Files.readString(Paths.get(FILE_PATH));
     }

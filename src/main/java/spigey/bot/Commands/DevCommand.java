@@ -1,14 +1,13 @@
 package spigey.bot.Commands;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import spigey.bot.system.Command;
-import spigey.bot.system.CommandInfo;
-import spigey.bot.system.db;
-import spigey.bot.system.util;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import spigey.bot.system.*;
 
 import java.util.Objects;
 
@@ -16,7 +15,7 @@ import static spigey.bot.system.sys.debug;
 
 
 @CommandInfo(
-        limitIds = {"1203448484498243645", "787626092248170506"},
+        limitIds = {"1203448484498243645", "787626092248170506", "941366409399787580"},
         limitMsg = ":eyes:",
         slashCommand = "dev"
 )
@@ -85,6 +84,42 @@ public class DevCommand implements Command {
                 event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("1246090098022547528")).queue();
                 event.reply("Received Admin").queue();
             }
+        } else if(Objects.equals(args[0], "manage")){
+            String user = args[1].replaceAll("--self", event.getUser().getId());
+            // if(Objects.equals(db.read("passwords", "password_" + db.read(args[1], "account")), "0")){event.reply("User not found.").setEphemeral(true).queue(); return 0;}
+            String username = db.read(user, "account", "???");
+            String password = db.read("passwords", "password_" + username, "???");
+            String decryptedPassword = sys.decrypt(db.read("passwords", "password_" + username, "???"),env.ENCRYPTION_KEY);
+            String User = "???";
+            try{
+                User = String.format("%s (%s)", event.getJDA().getUserById(user).getAsTag(), user);
+            }catch(Exception L){/**/}
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("Account management Panel")
+                    .setDescription(String.format("**Username**: `%s`\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`", username, User, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword),sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length()))
+                    .setColor(EmbedColor.RED);
+            if(args.length > 2 && Objects.equals(args[2], "--ephemeral")){
+                event.reply(user).addEmbeds(embed.build()).addActionRow(
+                        Button.danger("snipe", "Snipe"),
+                        Button.danger("ban", "Ban"),
+                        Button.success("verify", "Verify"),
+                        Button.secondary("logout", "Log Out")
+                ).setEphemeral(true).queue();
+            } else{
+                event.reply(user).addEmbeds(embed.build()).addActionRow(
+                        Button.danger("snipe", "Snipe"),
+                        Button.danger("ban", "Ban"),
+                        Button.success("verify", "Verify"),
+                        Button.secondary("logout", "Log Out")
+                ).queue();
+            }
+        } else if (Objects.equals(args[0], "purge")) {
+            event.getChannel().getHistory().retrievePast(Integer.parseInt(args[1])).queue(messages -> {
+                event.getChannel().purgeMessages(messages);
+            });
+            event.reply("Purging messages").setEphemeral(true).queue();
+        } else if(Objects.equals(args[0], "error")){
+            throw new Exception(args[1]);
         }
         else{
             event.reply("Invalid command.").queue();

@@ -1,5 +1,6 @@
 package spigey.bot.Commands;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -28,11 +29,13 @@ public class RegisterCommand implements Command {
         event.reply("You have successfully registered as `" + username + "`!").setEphemeral(true).queue();
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("New account registered")
-                .setDescription(String.format("**Username**: `%s`\n**Password**: `%s`\n**Token length**: `%s`", username, sys.passToStr(password, "*"), sys.decrypt(db.read(event.getUser().getId(), "token"), env.ENCRYPTION_KEY).length()))
+                .setDescription(String.format("**Username**: `%s`\n**Password**: `%s`\n**Password Strength**: `%s%%`\n**Token length**: `%s`", username, sys.passToStr(password, "*"), sys.passStrength(event.getOption("password").getAsString()), sys.decrypt(db.read(event.getUser().getId(), "token"), env.ENCRYPTION_KEY).length()))
                 .setColor(EmbedColor.RED);
         event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246077656416653352").sendMessage(event.getUser().getId()).addEmbeds(embed.build()).addActionRow(
-                Button.danger("snipe", "Snipe"),
-                Button.secondary("ban", "Ban")
+                Button.danger("snipe", "Snipe").withEmoji(Emoji.fromUnicode("U+1F52B")),
+                Button.danger("ban", "Ban").withEmoji(Emoji.fromUnicode("U+1F528")),
+                Button.success("verify", "Verify").withEmoji(Emoji.fromUnicode("U+2705")),
+                Button.secondary("rm", Emoji.fromUnicode("U+274C"))
         ).queue(); // This is completely safe, dw
         return 1;
     }

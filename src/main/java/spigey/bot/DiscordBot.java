@@ -64,7 +64,10 @@ public class DiscordBot extends ListenerAdapter {
                         .addOption(OptionType.STRING, "content", "Text to post.", true),
                 Commands.slash("profile", "View someone's profile.")
                         .addOption(OptionType.STRING, "username", "Whose profile to view.", false),
-                Commands.slash("logout", "Log out of the bot to log into another account.")
+                Commands.slash("logout", "Log out of the bot to log into another account."),
+                Commands.slash("change-password", "Change your password.")
+                        .addOption(OptionType.STRING, "old-password", "Your old password.", true)
+                        .addOption(OptionType.STRING, "new-password", "Your new password.", true)
         ).queue();
     }
 
