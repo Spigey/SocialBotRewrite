@@ -20,8 +20,8 @@ public class util {
         classs = Class;
     }
     public static String content(){
-        if(eventt.getMessage().getContentRaw().length() < (classs.getClass().getSimpleName().replace("Command","").length() + prefix.length() + 1)) return "";
-        return eventt.getMessage().getContentRaw().substring((classs.getClass().getSimpleName().replace("Command","").length() + prefix.length() + 1));
+        if(eventt.getMessage().getContentRaw().length() < (classs.getClass().getSimpleName().replace("Command","").length() + prefix.length() - 2)) return "";
+        return eventt.getMessage().getContentRaw().substring((classs.getClass().getSimpleName().replace("Command","").length() + prefix.length() - 2)).trim();
     }
     public static String content(int index){
         String out;

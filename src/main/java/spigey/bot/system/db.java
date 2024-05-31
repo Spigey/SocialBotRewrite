@@ -3,9 +3,12 @@ import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 import static spigey.bot.system.util.log;
@@ -106,5 +109,8 @@ public class db {
         try (FileWriter database = new FileWriter(FILE_PATH)) {
             database.write(existingData.toJSONString());
         }
+    }
+    public static String get() throws Exception {
+        return Files.readString(Paths.get(FILE_PATH));
     }
 }

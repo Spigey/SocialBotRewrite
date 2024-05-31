@@ -1,16 +1,17 @@
 package spigey.bot.system;
 
+import javax.annotation.Nullable;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Random;
 import java.util.Scanner;
 
 public class sys {
@@ -136,5 +137,36 @@ public class sys {
         byte[] keyBytes = encryptionKey.getBytes(StandardCharsets.UTF_8);
         byte[] hashedBytes = digest.digest(keyBytes);
         return new SecretKeySpec(hashedBytes, "AES");
+    }
+
+    public static String trim(String str, int length) {
+        return str.length() > length ? str.substring(0, length) + "..." : str;
+    }
+
+    public static String strOrDefault(@Nullable String str, String def){
+        if(str == null){
+            return def;
+        }
+        return str;
+    }
+
+    public static String generateToken(String username, String password, int length) throws NoSuchAlgorithmException {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._%$#@;:,&=+!";
+        StringBuilder sb = new StringBuilder();
+        String seed = env.getTokenSeed(username, password, generateKey(env.ENCRYPTION_KEY));
+        Random random = new Random(seed.hashCode());
+        for(int i = 0; i < length; i++){
+            int index = random.nextInt(chars.length());
+            sb.append(chars.charAt(index));
+        }
+        return sb.toString();
+    }
+
+    public static String passToStr(String password, String mask){
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < password.length(); i++) {
+            sb.append(mask);
+        }
+        return sb.toString();
     }
 }

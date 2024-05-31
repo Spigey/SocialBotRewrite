@@ -12,6 +12,7 @@ public class LoginCommand implements Command {
     @Override
     public int slashCommand(SlashCommandInteractionEvent event) throws Exception {
         if(event.getGuild() == null){event.reply("Commands are disabled in DMs, tough luck mguy").queue(); return 0;}
+        if(!Objects.equals(db.read(event.getUser().getId(), "account"), "0")){event.reply("You are already logged in!").setEphemeral(true).queue(); return 0;}
         String username = event.getOption("username").getAsString();
         String password = sys.encrypt(event.getOption("password").getAsString(), env.ENCRYPTION_KEY);
         // if(Objects.equals(db.read("passwords", "password_" + username), "0")){event.reply("There is no user with that username!").setEphemeral(true).queue(); return;}
