@@ -127,6 +127,14 @@ public class sys {
         return Base64.getEncoder().encodeToString(encryptedBytes);
     }
 
+    public static String trim(String str, int length) {
+        return str.length() > length ? str.substring(0, length - 4) + "..." : str;
+    }
+
+    public static String mirt(String str, int length) {
+        return str.length() > length ? "..." + str.substring(str.length() - length, str.length() - 1): str;
+    }
+
     public static String decrypt(String encryptedText, String encryptionKey) throws Exception {
         try {
             SecretKey secretKey = generateKey(encryptionKey);
@@ -146,10 +154,6 @@ public class sys {
         byte[] keyBytes = encryptionKey.getBytes(StandardCharsets.UTF_8);
         byte[] hashedBytes = digest.digest(keyBytes);
         return new SecretKeySpec(hashedBytes, "AES");
-    }
-
-    public static String trim(String str, int length) {
-        return str.length() > length ? str.substring(0, length - 4) + "..." : str;
     }
 
     public static String strOrDefault(@Nullable String str, String def){
@@ -206,4 +210,9 @@ public class sys {
     }
 
     public static void empty(Object nothing){}
+
+    public static Object choice(Object[] choices) {
+        Random random = new Random();
+        return choices[random.nextInt(choices.length)];
+    }
 }

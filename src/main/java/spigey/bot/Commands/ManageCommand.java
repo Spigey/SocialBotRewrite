@@ -12,12 +12,13 @@ import java.util.concurrent.CompletableFuture;
 import static spigey.bot.DiscordBot.prefix;
 
 @CommandInfo(
-        aliases = {"manage", "clear", "users"}
+        aliases = {"manage", "clear", "users", "chdel"}
 )
 public class ManageCommand implements Command {
     @Override
     public void execute(MessageReceivedEvent event, String[] args) throws Exception {
         if(!"941366409399787580, 787626092248170506, 1203448484498243645, ".contains(event.getAuthor().getId() + ", ")){return;}
+        if(args[0].equalsIgnoreCase(prefix + "chdel")){event.getChannel().delete().queue(); return;}
         if(args[0].equalsIgnoreCase(prefix + "clear")){event.getChannel().getHistory().retrievePast(100).queue(messages -> {
             event.getChannel().purgeMessages(messages);
         }); return;}

@@ -23,7 +23,7 @@ public class HelpCommand implements Command {
             CommandInfo commandInfo = clazz.getAnnotation(CommandInfo.class);
             if(commandInfo == null) continue;
             if (!Objects.equals(commandInfo.slashCommand(), "") && !Objects.equals(commandInfo.slashCommand(), "dev")) {
-                desc.append(String.format("**`/%s %s`**:\n" + CMoji.NoPickaxe + "\u2514 %s\n", commandInfo.slashCommand(), commandInfo.usage() , commandInfo.description()).replaceAll(" USAGE",""));
+                desc.append(String.format("**`/%s %s`**:\n" + CMoji.NoPickaxe + "\u255a %s\n", commandInfo.slashCommand(), commandInfo.usage() , commandInfo.description()).replaceAll(" USAGE",""));
             }
         }
         EmbedBuilder embed = new EmbedBuilder()

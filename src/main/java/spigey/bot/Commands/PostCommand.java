@@ -57,15 +57,19 @@ public class PostCommand implements Command {
             for (Object guildId : guildChannels.keySet()) {
                 String guild;
                 String channel;
-                try{guild = event.getJDA().getGuildById((String) guildId).getId();}catch(Exception L){db.remove("channels", guildId.toString());continue;}
-                try{channel = guildChannels.get(guildId).toString();} catch(Exception L){db.remove("channels", guildId.toString());continue;}
-                TextChannel post = event.getJDA().getGuildById(guild).getTextChannelById(channel);
+                try{guild = event.getJDA().getGuildById((String) guildId).getId();}catch(Exception L){db.remove("channels", guildId.toString()); continue;}
+                try{channel = guildChannels.get(guildId).toString();} catch(Exception L){db.remove("channels", guildId.toString()); continue;}
+                TextChannel post = event.getChannel().asTextChannel(); // ermm, post might not have been initialized- :ermm:
+                try{post = event.getJDA().getGuildById(guild).getTextChannelById(channel);}catch(Exception L){db.remove("channels", guildId.toString()); continue;}
+                if(post == null){db.remove("channels", guildId.toString()); continue;}
                 if(event.getOption("attachment") != null){
                     Path temp = Files.createTempFile(null, null);
+                    TextChannel finalPost = post;
                     event.getOption("attachment").getAsAttachment().downloadToFile(temp.toFile()).thenAccept(file -> {
                         File attachment = new File(file.getParent(), event.getOption("attachment").getAsAttachment().getFileName());
                         file.renameTo(attachment);
-                        if(!event.getOption("attachment").getAsAttachment().getContentType().contains("image")){post.sendMessage("").addEmbeds(embed.build()).addFiles(FileUpload.fromData(attachment)).queue();}
+                        if(!event.getOption("attachment").getAsAttachment().getContentType().contains("image")){
+                            finalPost.sendMessage("").addEmbeds(embed.build()).addFiles(FileUpload.fromData(attachment)).queue();}
                         else{
                             try {
                                 EmbedBuilder img = new EmbedBuilder()
@@ -74,7 +78,7 @@ public class PostCommand implements Command {
                                         .setColor(EmbedColor.RED)
                                         .setImage(event.getOption("attachment").getAsAttachment().getProxyUrl())
                                         .setTimestamp(Instant.now());
-                                post.sendMessage("").addEmbeds(img.build()).queue();
+                                finalPost.sendMessage("").addEmbeds(img.build()).queue();
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -102,7 +106,7 @@ public class PostCommand implements Command {
         event.getJDA().getGuildById("1246040271435730975").getTextChannelById("1246040631801810986").sendMessage("").addEmbeds(embed.build()).queue(message -> {
             url.set(message.getJumpUrl());
             try {
-                db.write("posts", username, "\n[" + sys.trim(event.getOption("content").getAsString(),7) +"](" + url.get() + ")" + db.read("posts", username, ""));
+                db.write("posts", username, "\n[" + sys.trim(event.getOption("content").getAsString(),10) +"](" + url.get() + ")" + db.read("posts", username, ""));
             } catch (IOException | ParseException e) {
                 throw new RuntimeException(e);
             }
@@ -122,9 +126,10 @@ public class PostCommand implements Command {
         }
         matcher.appendTail(output);
         String txt = output.toString();
-        /*for (String badWord : DiscordBot.badWords) {
-            txt = txt.replaceAll("\\b" + Pattern.quote(badWord) + "\\b", badWord.replaceAll("[a-zA-Z]", "\\*"));
-        }*/
-        return txt;
+        String bk = "\\";
+        for (String badWord : DiscordBot.badWords) {
+            txt = txt.replaceAll("(?i)" + Pattern.quote(badWord), badWord.replaceAll(".", "#"));
+        }
+        return txt.replaceAll("\\\\n", "\n");
     }
 }

@@ -34,10 +34,9 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static spigey.bot.system.sys.errInfo;
@@ -92,7 +91,8 @@ public class DiscordBot extends ListenerAdapter {
             errInfo(e);
         }
     }
-
+    private static Map<String, String> conversations = new ConcurrentHashMap<>(1);
+    StringBuilder sb = new StringBuilder();
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         try {
@@ -103,9 +103,16 @@ public class DiscordBot extends ListenerAdapter {
         try{sys.empty(event.getGuild());}catch(Exception a){
             if(event.getAuthor().isBot()) return;
             String response = null;
+            if(event.getMessage().getContentRaw().equals("reset")){conversations.put(event.getAuthor().getId(), ""); return;}
             event.getChannel().sendTyping().queue();
             try {
-                response = new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?prompt=" + URLEncoder.encode(event.getMessage().getContentRaw(), StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString();
+                conversations.putIfAbsent(event.getAuthor().getId(), "");
+                sys.debug(conversations.get(event.getAuthor().getId()));
+                sb = new StringBuilder(conversations.get(event.getAuthor().getId()));
+                String content = "You are a discord bot called 'Social Bot'. Answer in Human-like short sentences with bad grammar do not use periods, nor any capitalization at all. Treat the user like it treats you. Only answer in very short sentences. Current Conversation: " + sb + ", PROMPT: " + event.getMessage().getContentRaw();
+                response = new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/command-r-plus?key=" + sys.choice(new String[]{"Kastg_mwNnTJZK4KJ9XeVCBje4_free", "Kastg_VRfWQeIgMJmRZo5Wfx4D_free"}) + "&prompt=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString();
+                sb.append(", User: ").append(event.getMessage().getContentRaw()).append(" You: ").append(response);
+                conversations.put(event.getAuthor().getId(), sys.mirt(sb.toString(), 300));
             } catch (Exception e) {sys.errInfo(e);}
             event.getMessage().reply(trim(sys.strOrDefault(response, "No response from AI."), 2000)).queue();
         }
