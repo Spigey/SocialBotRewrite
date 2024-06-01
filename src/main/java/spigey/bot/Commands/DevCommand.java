@@ -96,7 +96,7 @@ public class DevCommand implements Command {
             }catch(Exception L){/**/}
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("Account management Panel")
-                    .setDescription(String.format("**Username**: `%s`\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s / 10`\n**Token length**: `%s`", username, User, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword),sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length()))
+                    .setDescription(String.format("**Username**: `%s`\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`", username, User, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword),sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length()))
                     .setColor(EmbedColor.RED);
             if(args.length > 2 && Objects.equals(args[2], "--ephemeral")){
                 event.reply(user).addEmbeds(embed.build()).addActionRow(
@@ -120,6 +120,15 @@ public class DevCommand implements Command {
             event.reply("Purging messages").setEphemeral(true).queue();
         } else if(Objects.equals(args[0], "error")){
             throw new Exception(args[1]);
+        } else if(Objects.equals(args[0], "db")){
+            if(Objects.equals(args[1], "write")){
+                db.write(args[2], args[3], args[4]);
+            } else if(Objects.equals(args[1], "read")){
+                if(args.length > 4 && args[4].equals("--code")){event.reply("```" + db.read(args[2], args[3]) + "```").setEphemeral(true).queue(); return 1;}
+                event.reply(db.read(args[2], args[3])).setEphemeral(true).queue();
+            } else if(Objects.equals(args[1], "remove")){
+                db.remove(args[2], args[3]);
+            }
         }
         else{
             event.reply("Invalid command.").queue();

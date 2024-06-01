@@ -17,12 +17,10 @@ public class DecryptCommand implements Command {
     @Override
     public void execute(MessageReceivedEvent event, String[] args) throws Exception {
         util.init(event, this);
-        msg(args[1]);
         if(Objects.equals(args[1], "password")) {
             msg(sys.decrypt(db.read("passwords", "password_" + args[2]), env.ENCRYPTION_KEY));
         } else{
-            debug(content());
-            msg(sys.decrypt(db.read(content(), "token"), env.ENCRYPTION_KEY));
+            msg(sys.decrypt(db.read(args[1], "token"), env.ENCRYPTION_KEY));
         }
     }
 }

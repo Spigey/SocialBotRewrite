@@ -1,22 +1,21 @@
 package spigey.bot.system;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.requests.RestAction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import spigey.bot.DiscordBot;
 
-import javax.security.auth.login.LoginException;
-
-import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static spigey.bot.DiscordBot.jda;
 import static spigey.bot.DiscordBot.prefix;
@@ -129,6 +128,43 @@ public class util {
             }
         }
     }
+
+    public static CompletableFuture<List<User>> userExecF(String username) {
+        CompletableFuture<List<User>> future = new CompletableFuture<>();
+        List<User> retrievedUsers = new ArrayList<>();
+        List<CompletableFuture<User>> userFutures = new ArrayList<>();
+
+        CompletableFuture.runAsync(() -> {
+            try (FileReader reader = new FileReader("src/main/java/spigey/bot/system/database/database.json")) {
+                JSONObject existingData = (JSONObject) new JSONParser().parse(reader);
+
+                for (Object userId : existingData.keySet()) {
+                    JSONArray userData = (JSONArray) existingData.get(userId);
+                    for (Object obj : userData) {
+                        JSONObject userObject = (JSONObject) obj;
+                        if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
+                            RestAction<User> userAction = jda.retrieveUserById((String) userId);
+                            CompletableFuture<User> userFuture = new CompletableFuture<>();
+                            userAction.queue(userFuture::complete, userFuture::completeExceptionally);
+                            userFutures.add(userFuture);
+                        }
+                    }
+                }
+
+                CompletableFuture.allOf(userFutures.toArray(new CompletableFuture[0]))
+                        .thenApply(v -> userFutures.stream().map(CompletableFuture::join).toList())
+                        .thenAccept(retrievedUsers::addAll)
+                        .thenRun(() -> future.complete(retrievedUsers));
+
+            } catch (Exception e) {
+                future.completeExceptionally(e); // Handle the exception
+            }
+        });
+
+        return future;
+    }
+
+
 
     public static void userExec(String username, Consumer<User> action) {
         try {

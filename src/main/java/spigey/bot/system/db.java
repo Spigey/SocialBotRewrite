@@ -55,15 +55,17 @@ public class db {
         return defaultValue;
     }
 
-    public static String read(String user, String key, String def) throws IOException, ParseException {
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-        JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
-        for (Object obj : userData) {
-            JSONObject userObject = (JSONObject) obj;
-            if (userObject.containsKey(key)) {
-                return (String) userObject.get(key);
+    public static String read(String user, String key, String def) {
+        try {
+            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+            JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
+            for (Object obj : userData) {
+                JSONObject userObject = (JSONObject) obj;
+                if (userObject.containsKey(key)) {
+                    return (String) userObject.get(key);
+                }
             }
-        }
+        }catch (Exception L){/**/}
         return def;
     }
 

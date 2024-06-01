@@ -93,7 +93,7 @@ public class PostCommand implements Command {
         event.getJDA().getGuildById("1246040271435730975").getTextChannelById("1246040631801810986").sendMessage("").addEmbeds(embed.build()).queue(message -> {
             url.set(message.getJumpUrl());
             try {
-                db.write("posts", username, db.read("posts", username, "") + "\n[" + sys.trim(event.getOption("content").getAsString(),7) +"](" + url.get() + ")");
+                db.write("posts", username, "\n[" + sys.trim(event.getOption("content").getAsString(),7) +"](" + url.get() + ")" + db.read("posts", username, ""));
             } catch (IOException | ParseException e) {
                 throw new RuntimeException(e);
             }

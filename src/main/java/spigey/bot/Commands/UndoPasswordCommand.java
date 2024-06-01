@@ -28,7 +28,7 @@ public class UndoPasswordCommand implements Command {
         event.editButton(event.getButton().asDisabled()).queue();
         MessageEmbed punishLog = new EmbedBuilder()
                 .setTitle(":closed_lock_with_key: Password Reverted")
-                .setDescription(String.format("%s (%s / %s)'s Password change has been reverted by %s.\n`%s` (%s / 10) -> ||`%s`|| (%s / 10)",username, user, event.getJDA().retrieveUserById(user).complete().getAsTag(), event.getUser().getName(), newPassword, sys.passStrength(newPassword), password, sys.passStrength(password)))
+                .setDescription(String.format("%s (%s / %s)'s Password change has been reverted by %s.\n`%s` (%s%%) -> ||`%s`|| (%s%%)",username, user, event.getJDA().retrieveUserById(user).complete().getAsTag(), event.getUser().getName(), newPassword, sys.passStrength(newPassword), password, sys.passStrength(password)))
                 .setColor(EmbedColor.BLUE).build();
         event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246129804344823899").sendMessage("").addEmbeds(punishLog).queue();
     }

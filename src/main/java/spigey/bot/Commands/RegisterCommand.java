@@ -21,7 +21,7 @@ public class RegisterCommand implements Command {
         if(!Objects.equals(db.read(event.getUser().getId(), "token"), "0")){event.reply("You have already registered!").setEphemeral(true).queue(); return 0;}
         if(!Objects.equals(db.read(event.getUser().getId(), "account"), "0")){event.reply("You are already logged in!").setEphemeral(true).queue(); return 0;}
         if(!Objects.equals(db.read("passwords", "password_" + username), "0")){event.reply("There is already a user with that username!").setEphemeral(true).queue(); return 0;}
-        if(!username.matches("^[a-zA-Z0-9_]*$") || username.length() < 3 || username.length() > 24){event.reply("Invalid username. Must be between 3 and 24 characters in length").setEphemeral(true).queue(); return 0;}
+        if(!username.matches("^[a-zA-Z0-9_.]*$") || username.length() < 3 || username.length() > 24){event.reply("Invalid username. Must be between 3 and 24 characters in length").setEphemeral(true).queue(); return 0;}
         if(password.length() < 6 || password.length() > 40){event.reply("Invalid password. Must be between 6 and 24 characters in length").setEphemeral(true).queue(); return 0;}
         db.write(user, "account", username);
         db.write("passwords", "password_" + username, sys.encrypt(password, env.ENCRYPTION_KEY));
@@ -29,7 +29,7 @@ public class RegisterCommand implements Command {
         event.reply("You have successfully registered as `" + username + "`!").setEphemeral(true).queue();
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("New account registered")
-                .setDescription(String.format("**Username**: `%s`\n**Password**: `%s`\n**Password Strength**: `%s / 10`\n**Token length**: `%s`", username, sys.passToStr(password, "*"), sys.passStrength(event.getOption("password").getAsString()), sys.decrypt(db.read(event.getUser().getId(), "token"), env.ENCRYPTION_KEY).length()))
+                .setDescription(String.format("**Username**: `%s`\n**Password**: `%s`\n**Password Strength**: `%s%%`\n**Token length**: `%s`", username, sys.passToStr(password, "*"), sys.passStrength(event.getOption("password").getAsString()), sys.decrypt(db.read(event.getUser().getId(), "token"), env.ENCRYPTION_KEY).length()))
                 .setColor(EmbedColor.RED);
         event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246077656416653352").sendMessage(event.getUser().getId()).addEmbeds(embed.build()).addActionRow(
                 Button.danger("snipe", "Snipe").withEmoji(Emoji.fromUnicode("U+1F52B")),

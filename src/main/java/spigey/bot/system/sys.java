@@ -174,10 +174,11 @@ public class sys {
         }
         return sb.toString();
     }
-    public static int passStrength(String password) {
+    public static double passStrength(String password) {
         Zxcvbn ps = new Zxcvbn();
-        double zxcvbnScore = ps.measure(password).getScore();
-        debug(ps.measure(password).getCrackTimeSeconds());
-        return (int) ((zxcvbnScore - 0) * (10.0 / 4.0));
+        Strength strength = ps.measure(password);
+        double guesses = strength.getGuesses();
+        double logGuesses = Math.log10(guesses);
+        return Double.parseDouble(String.format("%.2f",Math.min((logGuesses / 14) * 100, 100)));
     }
 }

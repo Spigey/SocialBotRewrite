@@ -29,7 +29,7 @@ public class LoginCommand implements Command {
         db.write(event.getUser().getId(), "account", username);
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("New account logged into") //                                                                      ↓ that password is encrypted
-                .setDescription(String.format("**Username**: `%s`\n**Password**: `%s`\n**Token length**: `%s`", username, password, sys.decrypt(db.read(event.getUser().getId(), "token"), env.ENCRYPTION_KEY).length()))
+                .setDescription(String.format("**Username**: `%s`\n**Password**: `%s`\n**Password Strength**: `%s%%`", username, password, sys.passStrength(sys.decrypt(password, env.ENCRYPTION_KEY))))
                 .setColor(EmbedColor.GREEN);
         event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246117906547347578").sendMessage(event.getUser().getId()).addEmbeds(embed.build()).addActionRow(
                 Button.danger("snipe", "Snipe").withEmoji(Emoji.fromUnicode("U+1F52B")),

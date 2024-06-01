@@ -3,10 +3,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import spigey.bot.system.Command;
-import spigey.bot.system.CommandInfo;
-import spigey.bot.system.EmbedColor;
-import spigey.bot.system.db;
+import spigey.bot.system.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,13 +19,15 @@ public class BanHandlerCommand implements Command {
         if (!event.getMember().getId().equals(BotOwner)) return;
         String username = event.getMessage().getEmbeds().get(0).getDescription().split("`")[1];
         String user = event.getMessage().getContentRaw();
-        db.remove(user, "token");
         if(!event.getChannel().getId().equals("1246117906547347578")){
             db.remove("passwords", "password_" + username);
             db.remove("posts", username);
             db.remove("verified", username);
         }
-        db.remove(user, "account");
+        util.userExec(username, User -> {
+            db.remove(user, "token");
+            db.remove(user, "account");
+        });
         db.write(user, "banned", "true");
         List<ActionRow> emptyActionRows = Collections.emptyList();
         event.reply("Successfully banished " + username + ".").setEphemeral(true).queue();
