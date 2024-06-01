@@ -11,10 +11,11 @@ import java.lang.annotation.Target;
 public @interface CommandInfo {
     String[] aliases() default {};
     String[] limitIds() default {};
-    String description() default "";
+    String description() default "DESCRIPTION";
     String limitMsg() default "You are not allowed to use this command!";
     long cooldown() default 0;
     String slashCommand() default "";
     boolean restrict() default true;
     String buttonId() default "";
+    String usage() default "USAGE";
 }

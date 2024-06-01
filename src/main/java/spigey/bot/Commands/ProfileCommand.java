@@ -11,7 +11,9 @@ import spigey.bot.system.sys;
 import java.util.Objects;
 
 @CommandInfo(
-        slashCommand = "profile"
+        slashCommand = "profile",
+        usage = "[username]",
+        description = "View someone's profile."
 )
 public class ProfileCommand implements Command {
     @Override

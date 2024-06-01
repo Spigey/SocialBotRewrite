@@ -9,7 +9,9 @@ import spigey.bot.system.*;
 import java.util.Objects;
 
 @CommandInfo(
-        slashCommand = "register"
+        slashCommand = "register",
+        description = "Register to be able to use the bot!",
+        usage = "<username> <password>"
 )
 public class RegisterCommand implements Command {
     @Override

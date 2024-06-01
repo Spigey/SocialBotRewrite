@@ -8,7 +8,8 @@ import spigey.bot.system.EmbedColor;
 import spigey.bot.system.db;
 
 @CommandInfo(
-        slashCommand = "logout"
+        slashCommand = "logout",
+        description = "Log out of the bot to log into another account."
 )
 public class LogoutCommand implements Command {
     @Override

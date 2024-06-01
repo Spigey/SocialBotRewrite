@@ -1,5 +1,8 @@
 package spigey.bot;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -23,13 +26,22 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import javax.security.auth.login.LoginException;
 import java.io.*;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
+import static spigey.bot.system.sys.errInfo;
+import static spigey.bot.system.sys.trim;
 import static spigey.bot.system.util.*;
 import static spigey.bot.system.util.msg;
 
@@ -42,6 +54,7 @@ public class DiscordBot extends ListenerAdapter {
             .enableIntents(GatewayIntent.MESSAGE_CONTENT)
             .addEventListeners(new DiscordBot())
             .build();
+    public static List<String> badWords = new ArrayList<>();
     public static void main(String[] args) throws Exception {
         JSONObject config = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/config.json"));
         db.setDefaultValue((String) config.get("DEFAULT_VALUE"));
@@ -67,8 +80,17 @@ public class DiscordBot extends ListenerAdapter {
                 Commands.slash("logout", "Log out of the bot to log into another account."),
                 Commands.slash("change-password", "Change your password.")
                         .addOption(OptionType.STRING, "old-password", "Your old password.", true)
-                        .addOption(OptionType.STRING, "new-password", "Your new password.", true)
+                        .addOption(OptionType.STRING, "new-password", "Your new password.", true),
+                Commands.slash("help", "Explore a list of available commands and their usage.")
         ).queue();
+        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/spigey/bot/system/badwords.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                badWords.add(line.trim());
+            }
+        } catch (Exception e) {
+            errInfo(e);
+        }
     }
 
     @Override
@@ -78,6 +100,15 @@ public class DiscordBot extends ListenerAdapter {
                 if (Objects.equals(((TextChannel) event.getChannel()).getParentCategoryId(), "1246077622522351626") && !event.getAuthor().getId().equals(event.getJDA().getSelfUser().getId()))
                     event.getMessage().delete().queue();
         }catch(Exception a){/* not empty*/}
+        try{sys.empty(event.getGuild());}catch(Exception a){
+            if(event.getAuthor().isBot()) return;
+            String response = null;
+            event.getChannel().sendTyping().queue();
+            try {
+                response = new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?prompt=" + URLEncoder.encode(event.getMessage().getContentRaw(), StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString();
+            } catch (Exception e) {sys.errInfo(e);}
+            event.getMessage().reply(trim(sys.strOrDefault(response, "No response from AI."), 2000)).queue();
+        }
         BotOwner = event.getJDA().retrieveApplicationInfo().complete().getOwner().getId();
         try {
             commandHandler.onMessageReceived(event);

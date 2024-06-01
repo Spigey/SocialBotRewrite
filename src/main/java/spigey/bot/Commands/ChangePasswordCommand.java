@@ -10,7 +10,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 
 @CommandInfo(
-        slashCommand = "change-password"
+        slashCommand = "change-password",
+        description = "Change your password",
+        usage = "<old-password> <new-password>"
 )
 public class ChangePasswordCommand implements Command {
     @Override

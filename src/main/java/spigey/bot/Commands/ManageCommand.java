@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import static spigey.bot.DiscordBot.prefix;
 
 @CommandInfo(
-        aliases = {"manage", "clear"}
+        aliases = {"manage", "clear", "users"}
 )
 public class ManageCommand implements Command {
     @Override
@@ -22,6 +22,10 @@ public class ManageCommand implements Command {
             event.getChannel().purgeMessages(messages);
         }); return;}
         String user = args[1].replaceAll("--self", event.getAuthor().getId());
+        if(args[0].equalsIgnoreCase(prefix + "users")){util.userExecF(args[1]).thenAccept(users -> {StringBuilder usersString = new StringBuilder();
+            for (User userr : users) {
+                usersString.append(String.format("%s (%s), ", userr.getAsTag(), userr.getId()));
+            } event.getChannel().sendMessage(usersString.substring(0, usersString.length() - 2)).queue();}); return;}
         String username = db.read(user, "account", "???");
         String password = db.read("passwords", "password_" + username, "???");
         String decryptedPassword = sys.decrypt(db.read("passwords", "password_" + username, "???"),env.ENCRYPTION_KEY);
@@ -41,7 +45,7 @@ public class ManageCommand implements Command {
             try {
                 embed = new EmbedBuilder()
                         .setTitle("Account management Panel")
-                        .setDescription(String.format("**Username**: `%s` %s\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Users**: `%s`", username, db.read("verified", username, ""), finalUser, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), usersString))
+                        .setDescription(String.format("**Username**: `%s` %s\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Users**: `%s`", username, db.read("verified", username, ""), finalUser, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), usersString.substring(0, usersString.length() - 2)))
                         .setColor(EmbedColor.RED);
             } catch (Exception e) {/**/}
             event.getMessage().reply(user).addEmbeds(embed.build()).addActionRow(

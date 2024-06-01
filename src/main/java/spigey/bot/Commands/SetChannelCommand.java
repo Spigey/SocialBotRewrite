@@ -10,7 +10,9 @@ import spigey.bot.system.db;
 import static spigey.bot.system.util.msg;
 
 @CommandInfo(
-        slashCommand = "setchannel"
+        slashCommand = "setchannel",
+        description = "Select a channel to send posts to.",
+        usage = "<channel>"
 )
 public class SetChannelCommand implements Command {
     @Override

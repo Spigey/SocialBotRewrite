@@ -7,6 +7,10 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -145,7 +149,7 @@ public class sys {
     }
 
     public static String trim(String str, int length) {
-        return str.length() > length ? str.substring(0, length) + "..." : str;
+        return str.length() > length ? str.substring(0, length - 4) + "..." : str;
     }
 
     public static String strOrDefault(@Nullable String str, String def){
@@ -181,4 +185,25 @@ public class sys {
         double logGuesses = Math.log10(guesses);
         return Double.parseDouble(String.format("%.2f",Math.min((logGuesses / 14) * 100, 100)));
     }
+    public static String sendApiRequest(String url, String method, Map<String, String> headers, String body) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body));
+
+        // Add default headers for common API interactions
+        builder.header("Accept", "application/json"); // Assume JSON response by default
+        builder.header("User-Agent", "MyJavaApp/1.0"); // Identify your application
+
+        // Add any additional custom headers
+        if (headers != null) {
+            headers.forEach(builder::header);
+        }
+
+        HttpRequest request = builder.build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return response.body(); // Directly return the response body
+    }
+
+    public static void empty(Object nothing){}
 }

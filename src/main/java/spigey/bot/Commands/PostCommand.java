@@ -1,5 +1,7 @@
 package spigey.bot.Commands;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -9,24 +11,30 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import spigey.bot.DiscordBot;
 import spigey.bot.system.*;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static spigey.bot.system.sys.errInfo;
+
 @CommandInfo(
         slashCommand = "post",
-        cooldown = 300000
+        cooldown = 300000,
+        usage = "<content> [attachment]",
+        description = "Post something to all servers."
 )
 public class PostCommand implements Command {
     @Override
@@ -43,6 +51,7 @@ public class PostCommand implements Command {
                 .setDescription(txt(event.getOption("content").getAsString()))
                 .setColor(EmbedColor.RED)
                 .setTimestamp(Instant.now());
+        event.reply("Successfully posted to " + channelsArray.size() + " servers!").setEphemeral(true).queue();
         for (Object obj : channelsArray) {
             JSONObject guildChannels = (JSONObject) obj;
             for (Object guildId : guildChannels.keySet()) {
@@ -97,13 +106,13 @@ public class PostCommand implements Command {
             } catch (IOException | ParseException e) {
                 throw new RuntimeException(e);
             }
-            event.reply("Successfully posted to " + channelsArray.size() + " servers!").setEphemeral(true).queue();
         });
         if(!Objects.equals(db.read("verified", username), "0")) return 0;
         return 1;
     }
-    private static String txt(String text) throws IOException, ParseException {
+    private static String txt(String text) throws Exception {
         Pattern mentionPattern = Pattern.compile("@(\\w+)");
+        // Matcher matcher = mentionPattern.matcher(new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?prompt=" + URLEncoder.encode("You're a Moderation AI. Your task is to keep posts PG13 by censoring bad words by replacing every single letter with `\\*`. Make sure to always double check that you have censored actual BAD words, and no good words. For example: `you are a retard` -> `you are a \\*\\*\\*\\*\\*\\*`, Do not censor \"fuck\" and \"shit\". If the prompt does not contain any bad words, just return the prompt again. You can ONLY reply in the censored prompt, the users prompt is: " + text + "`", StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString());
         Matcher matcher = mentionPattern.matcher(text);
         StringBuffer output = new StringBuffer();
         while (matcher.find()) {
@@ -112,6 +121,10 @@ public class PostCommand implements Command {
             if(!Objects.equals(db.read("passwords", "password_" + username), "0")) matcher.appendReplacement(output, Matcher.quoteReplacement(mention));
         }
         matcher.appendTail(output);
-        return output.toString();
+        String txt = output.toString();
+        /*for (String badWord : DiscordBot.badWords) {
+            txt = txt.replaceAll("\\b" + Pattern.quote(badWord) + "\\b", badWord.replaceAll("[a-zA-Z]", "\\*"));
+        }*/
+        return txt;
     }
 }

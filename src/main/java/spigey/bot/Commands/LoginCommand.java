@@ -9,7 +9,9 @@ import spigey.bot.system.*;
 import java.util.Objects;
 
 @CommandInfo(
-        slashCommand = "login"
+        slashCommand = "login",
+        description = "Login as any user with their username and password.",
+        usage = "<username> <password>"
 )
 public class LoginCommand implements Command {
     @Override
