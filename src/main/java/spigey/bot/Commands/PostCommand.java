@@ -102,14 +102,14 @@ public class PostCommand implements Command {
         if(!Objects.equals(db.read("verified", username), "0")) return 0;
         return 1;
     }
-    private static String txt(String text){
+    private static String txt(String text) throws IOException, ParseException {
         Pattern mentionPattern = Pattern.compile("@(\\w+)");
         Matcher matcher = mentionPattern.matcher(text);
         StringBuffer output = new StringBuffer();
         while (matcher.find()) {
             String username = matcher.group(1); // Extract the username
             String mention = "[@" + username + "]" + "(http://.)"; // Construct the mention format
-            matcher.appendReplacement(output, Matcher.quoteReplacement(mention));
+            if(!Objects.equals(db.read("passwords", "password_" + username), "0")) matcher.appendReplacement(output, Matcher.quoteReplacement(mention));
         }
         matcher.appendTail(output);
         return output.toString();

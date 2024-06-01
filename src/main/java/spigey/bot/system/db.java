@@ -90,36 +90,40 @@ public class db {
         return (JSONArray) existingData.get(array);
     }
 
-    public static void remove(String user, String key) throws IOException, ParseException {
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+    public static void remove(String user, String key){
+        try {
+            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
 
-        JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
-        JSONObject userObjectToUpdate = null;
-        for (Object o : userData) {
-            if (((JSONObject) o).containsKey(key)) {
-                userObjectToUpdate = (JSONObject) o;
-                break;
+            JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
+            JSONObject userObjectToUpdate = null;
+            for (Object o : userData) {
+                if (((JSONObject) o).containsKey(key)) {
+                    userObjectToUpdate = (JSONObject) o;
+                    break;
+                }
             }
-        }
 
-        if (userObjectToUpdate != null) {
-            userObjectToUpdate.remove(key);
-            if (userObjectToUpdate.isEmpty()) {
-                userData.remove(userObjectToUpdate);
+            if (userObjectToUpdate != null) {
+                userObjectToUpdate.remove(key);
+                if (userObjectToUpdate.isEmpty()) {
+                    userData.remove(userObjectToUpdate);
+                }
+            } else {
+                // Key not found, nothing to remove
+                return;
             }
-        } else {
-            // Key not found, nothing to remove
-            return;
-        }
 
-        if (userData.isEmpty()) {
-            existingData.remove(user);
-        } else {
-            existingData.put(user, userData);
-        }
+            if (userData.isEmpty()) {
+                existingData.remove(user);
+            } else {
+                existingData.put(user, userData);
+            }
 
-        try (FileWriter database = new FileWriter(FILE_PATH)) {
-            database.write(existingData.toJSONString());
+            try (FileWriter database = new FileWriter(FILE_PATH)) {
+                database.write(existingData.toJSONString());
+            }
+        } catch(Exception L){
+            sys.errInfo(L);
         }
     }
 

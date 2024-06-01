@@ -16,6 +16,7 @@ import javax.security.auth.login.LoginException;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.function.Consumer;
 
 import static spigey.bot.DiscordBot.jda;
 import static spigey.bot.DiscordBot.prefix;
@@ -126,6 +127,23 @@ public class util {
                     }
                 }
             }
+        }
+    }
+
+    public static void userExec(String username, Consumer<User> action) {
+        try {
+            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
+            for (Object userId : existingData.keySet()) {
+                JSONArray userData = (JSONArray) existingData.get(userId);
+                for (Object obj : userData) {
+                    JSONObject userObject = (JSONObject) obj;
+                    if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
+                        jda.retrieveUserById((String) userId).queue(action);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // not empty
         }
     }
 }
