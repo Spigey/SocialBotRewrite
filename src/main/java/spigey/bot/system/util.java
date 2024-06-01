@@ -4,10 +4,18 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import spigey.bot.DiscordBot;
 
 import javax.security.auth.login.LoginException;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 
 import static spigey.bot.DiscordBot.jda;
 import static spigey.bot.DiscordBot.prefix;
@@ -102,5 +110,22 @@ public class util {
                 out = CMoji.NoPickaxe;
         }
         return out;
+    }
+    public static void notif(String username, MessageEmbed embed) throws Exception {
+        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
+        for (Object userId : existingData.keySet()) {
+            JSONArray userData = (JSONArray) existingData.get(userId);
+            for (Object obj : userData) {
+                JSONObject userObject = (JSONObject) obj;
+                if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
+                    User user = jda.retrieveUserById((String) userId).complete();
+                    if (user != null) {
+                        user.openPrivateChannel().queue(privateChannel -> {
+                            privateChannel.sendMessage("").addEmbeds(embed).queue();
+                        });
+                    }
+                }
+            }
+        }
     }
 }

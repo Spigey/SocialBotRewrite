@@ -20,16 +20,16 @@ public class ChangePasswordCommand implements Command {
         if(Objects.equals(username, "0")){event.reply("You need to be logged in to use this command!").setEphemeral(true).queue(); return 0;}
         if(!event.getOption("old-password").getAsString().equals(oldPassword)){event.reply("Invalid password provided.").setEphemeral(true).queue(); return 0;}
         db.write("passwords", "password_" + username, sys.encrypt(event.getOption("new-password").getAsString(), env.ENCRYPTION_KEY));
-        event.reply("You have successfully changed your password to ||`" + event.getOption("new-password") + "`||!").setEphemeral(true).queue();
+        event.reply("You have successfully changed your password to ||`" + event.getOption("new-password").getAsString() + "`||!").setEphemeral(true).queue();
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("Password Changed") //                                                                      ↓ that password is encrypted
-                .setDescription(String.format("**Username**: `%s`\n**Old Password Strength**: `%s%%`\n**New Password Strength**: `%s`", username, sys.passStrength(oldPassword), sys.passStrength(event.getOption("new-password").getAsString())))
+                .setDescription(String.format("**Username**: `%s`\n**Old Password Strength**: `%s / 10`\n**New Password Strength**: `%s / 10`\n||%s|| -> ||%s||", username, sys.passStrength(oldPassword), sys.passStrength(event.getOption("new-password").getAsString()), oldPassword, event.getOption("new-password").getAsString()))
                 .setColor(EmbedColor.GOLD);
         event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246196496592801834").sendMessage(event.getUser().getId()).addEmbeds(embed.build()).addActionRow(
                 Button.danger("snipe", "Snipe").withEmoji(Emoji.fromUnicode("U+1F52B")),
                 Button.danger("ban", "Ban").withEmoji(Emoji.fromUnicode("U+1F528")),
                 Button.primary("logout", "Log Out").withEmoji(Emoji.fromUnicode("U+1F6AA")),
-                Button.primary("pass-.%" + oldPassword + "%.%" + username + "%.%" + event.getOption("new-password") + "%.", "Undo Change").withEmoji(Emoji.fromUnicode("U+1F510")),
+                Button.primary("pass-.%" + oldPassword + "%.%" + username + "%.%" + event.getOption("new-password").getAsString() + "%.", "Undo Change").withEmoji(Emoji.fromUnicode("U+1F510")),
                 Button.secondary("rm", Emoji.fromUnicode("U+274C"))
         ).queue();
         return 0;

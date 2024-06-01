@@ -61,7 +61,8 @@ public class DiscordBot extends ListenerAdapter {
                 Commands.slash("setchannel", "Select a Channel to send posts to.")
                         .addOption(OptionType.CHANNEL, "channel", "Channel to send posts to", true),
                 Commands.slash("post", "Post something to all servers.")
-                        .addOption(OptionType.STRING, "content", "Text to post.", true),
+                        .addOption(OptionType.STRING, "content", "Text to post.", true)
+                        .addOption(OptionType.ATTACHMENT, "attachment", "Attach something to your post.", false),
                 Commands.slash("profile", "View someone's profile.")
                         .addOption(OptionType.STRING, "username", "Whose profile to view.", false),
                 Commands.slash("logout", "Log out of the bot to log into another account."),

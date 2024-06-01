@@ -10,10 +10,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.Random;
-import java.util.Scanner;
-
+import java.util.*;
+import com.nulabinc.zxcvbn.*;
+// compile 'com.nulab-inc:zxcvbn:1.9.0'
 
 public class sys {
     public static final String ANSI_RESET = "\u001B[0m";
@@ -175,15 +174,10 @@ public class sys {
         }
         return sb.toString();
     }
-    public static double passStrength(String password) {
-        int score = 0;
-        score += Math.min(password.length() >= 12 ? 5 : password.length() >= 8 ? 3 : 0, 5);
-        score += password.matches(".*[a-z].*") ? 1 : 0;
-        score += password.matches(".*[A-Z].*") ? 1 : 0;
-        score += password.matches(".*[0-9].*") ? 1 : 0;
-        score += password.matches(".*[!@#$%^&*()\\-+=].*") ? 2 : 0;
-
-        return Math.min(10, score) * 10;
+    public static int passStrength(String password) {
+        Zxcvbn ps = new Zxcvbn();
+        double zxcvbnScore = ps.measure(password).getScore();
+        debug(ps.measure(password).getCrackTimeSeconds());
+        return (int) ((zxcvbnScore - 0) * (10.0 / 4.0));
     }
-
 }

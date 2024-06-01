@@ -155,7 +155,15 @@ public class CommandHandler {
                     return;
                 }
                 boolean success = false;
-                if(Objects.equals(db.read(event.getUser().getId(), "banned"), "0")) success = command.slashCommand(event) == 1;
+                if(Objects.equals(db.read(event.getUser().getId(), "banned"), "0")){success = command.slashCommand(event) == 1;}else{
+                    StringBuilder cmd = new StringBuilder("/" + event.getName() + " ");
+                    List<OptionMapping> options = event.getOptions();
+                    for (OptionMapping option : options) {
+                        cmd.append(option.getName()).append(":").append(option.getAsString()).append(" ");
+                    }
+                    sys.warn(event.getUser().getName() + ": " + cmd);
+                    event.reply("ok").setEphemeral(true).queue();
+                }
 
                 // Update cooldown after successful execution
                 if (cooldownManager != null) {
@@ -171,14 +179,14 @@ public class CommandHandler {
             error("A critical has occurred while executing Command:\n" + e + "\nMessage: " + event.getName(), false);
             event.reply("A critical error occurred while executing Command: ```" + (err.toString().length() > 1000 ? err.substring(0, 1000) + "..." : err.toString()) + "```\nThis error has been automatically reported.").setEphemeral(true).queue();
             TextChannel channel = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246091381659668521");
-            StringBuilder cmd = new StringBuilder();
+            StringBuilder cmd = new StringBuilder("/" + event.getName() + " ");
             List<OptionMapping> options = event.getOptions();
             for (OptionMapping option : options) {
                 cmd.append(option.getName()).append(":").append(option.getAsString()).append(" ");
             }
             MessageEmbed embed = new EmbedBuilder()
                     .setTitle("Error Report")
-                    .setDescription(String.format("Message: ```/%s %s```\nAuthor Username: `%s`\nAuthor ID: `%s`", event.getName(),cmd, event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()))
+                    .setDescription(String.format("Message: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`", cmd, event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()))
                     .setColor(EmbedColor.RED)
                     .build();
             try {

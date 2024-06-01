@@ -21,6 +21,11 @@ public class LoginCommand implements Command {
         // if(Objects.equals(db.read("passwords", "password_" + username), "0")){event.reply("There is no user with that username!").setEphemeral(true).queue(); return;}
         if(!password.equals(db.read("passwords", "password_" + username))){event.reply("Invalid username or password.").setEphemeral(true).queue(); return 0;}
         event.reply("You have successfully logged in as `" + username + "`!").setEphemeral(true).queue();
+        EmbedBuilder notifEmbed = new EmbedBuilder()
+                .setTitle("New Login")
+                .setDescription("Your account was logged into on another location.\nIf this was not you, you can report it in the [Support Server](https://discord.gg/gQvCFMAG7P)")
+                .setColor(EmbedColor.RED);
+        util.notif(username, notifEmbed.build());
         db.write(event.getUser().getId(), "account", username);
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("New account logged into") //                                                                      ↓ that password is encrypted

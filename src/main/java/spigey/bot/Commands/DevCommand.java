@@ -96,7 +96,7 @@ public class DevCommand implements Command {
             }catch(Exception L){/**/}
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("Account management Panel")
-                    .setDescription(String.format("**Username**: `%s`\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`", username, User, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword),sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length()))
+                    .setDescription(String.format("**Username**: `%s`\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s / 10`\n**Token length**: `%s`", username, User, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword),sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length()))
                     .setColor(EmbedColor.RED);
             if(args.length > 2 && Objects.equals(args[2], "--ephemeral")){
                 event.reply(user).addEmbeds(embed.build()).addActionRow(
