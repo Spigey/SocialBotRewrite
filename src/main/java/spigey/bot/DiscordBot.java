@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -38,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static spigey.bot.system.sys.errInfo;
 import static spigey.bot.system.sys.trim;
@@ -80,7 +82,10 @@ public class DiscordBot extends ListenerAdapter {
                 Commands.slash("change-password", "Change your password.")
                         .addOption(OptionType.STRING, "old-password", "Your old password.", true)
                         .addOption(OptionType.STRING, "new-password", "Your new password.", true),
-                Commands.slash("help", "Explore a list of available commands and their usage.")
+                Commands.slash("help", "Explore a list of available commands and their usage."),
+                Commands.slash("ai", "Customize your personal AI.")
+                        .addOption(OptionType.STRING, "option", "Self explanatory.", true, true)
+                        .addOption(OptionType.STRING, "personality", "Select a personality for your personal AI.", false)
         ).queue();
         try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/spigey/bot/system/badwords.txt"))) {
             String line;
@@ -101,20 +106,23 @@ public class DiscordBot extends ListenerAdapter {
                     event.getMessage().delete().queue();
         }catch(Exception a){/* not empty*/}
         try{sys.empty(event.getGuild());}catch(Exception a){
+            /////////////  AI START
             if(event.getAuthor().isBot()) return;
             String response = null;
             if(event.getMessage().getContentRaw().equals("reset")){conversations.put(event.getAuthor().getId(), ""); return;}
             event.getChannel().sendTyping().queue();
             try {
                 conversations.putIfAbsent(event.getAuthor().getId(), "");
-                sys.debug(conversations.get(event.getAuthor().getId()));
+                sys.debug(event.getAuthor().getName() + ": " + event.getMessage().getContentRaw());
                 sb = new StringBuilder(conversations.get(event.getAuthor().getId()));
-                String content = "You are a discord bot called 'Social Bot'. Answer in Human-like short sentences with bad grammar do not use periods, nor any capitalization at all. Treat the user like it treats you. Only answer in very short sentences. Current Conversation: " + sb + ", PROMPT: " + event.getMessage().getContentRaw();
-                response = new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/command-r-plus?key=" + sys.choice(new String[]{"Kastg_mwNnTJZK4KJ9XeVCBje4_free", "Kastg_VRfWQeIgMJmRZo5Wfx4D_free"}) + "&prompt=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString();
+                String content = "You are a discord bot called 'Social Bot'. You are talking to " + event.getAuthor().getName() + ". This is your personality, act based on it, no matter what happens: " + db.read(event.getAuthor().getId(), "ai_personality", "Answer in Human-like short sentences with bad grammar do not use periods, nor any capitalization at all. Treat the user like it treats you. Only answer in very short sentences.") + ", Do not talk about your personality, only when the user asks you to. Current Conversation: " + sb + ", PROMPT: " + event.getMessage().getContentRaw();
+                response = new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?key=" + sys.choice(new String[]{"Kastg_mwNnTJZK4KJ9XeVCBje4_free", "Kastg_VRfWQeIgMJmRZo5Wfx4D_free"}) + "&prompt=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString();
+                sys.debug("AI: " + response);
                 sb.append(", User: ").append(event.getMessage().getContentRaw()).append(" You: ").append(response);
                 conversations.put(event.getAuthor().getId(), sys.mirt(sb.toString(), 300));
             } catch (Exception e) {sys.errInfo(e);}
             event.getMessage().reply(trim(sys.strOrDefault(response, "No response from AI."), 2000)).queue();
+            //////////// AI END
         }
         BotOwner = event.getJDA().retrieveApplicationInfo().complete().getOwner().getId();
         try {
@@ -179,5 +187,10 @@ public class DiscordBot extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         commandHandler.onButton(event);
+    }
+
+    @Override
+    public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
+        util.autoComplete("ai", "option", new String[]{"customize", "reset"}, event);
     }
 }

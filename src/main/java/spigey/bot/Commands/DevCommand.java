@@ -27,9 +27,7 @@ public class DevCommand implements Command {
             String user = args[2];
             String username = db.read(user, "account");
             db.remove(user, "token");
-            db.remove("passwords", "password_" + username);
-            db.remove(user, "account");
-            db.remove("posts", username);
+            db.remove(username);
             db.write(user,"banned", "true");
             debug("Banned " + user + "! (" + username + ")");
             event.getChannel().sendMessage("Banned " + event.getJDA().getUserById(user).getName()).queue();
@@ -59,9 +57,8 @@ public class DevCommand implements Command {
             String user = args[1];
             String username = db.read(user, "account");
             db.remove(user, "token");
-            db.remove("passwords", "password_" + username);
+            db.remove(username);
             db.remove(user, "account");
-            db.remove("posts", username);
             db.write(user,"banned", "true");
             debug("Banned " + user + "! (" + username + ")");
             event.reply("Banned " + user).queue();
@@ -88,8 +85,8 @@ public class DevCommand implements Command {
             String user = args[1].replaceAll("--self", event.getUser().getId());
             // if(Objects.equals(db.read("passwords", "password_" + db.read(args[1], "account")), "0")){event.reply("User not found.").setEphemeral(true).queue(); return 0;}
             String username = db.read(user, "account", "???");
-            String password = db.read("passwords", "password_" + username, "???");
-            String decryptedPassword = sys.decrypt(db.read("passwords", "password_" + username, "???"),env.ENCRYPTION_KEY);
+            String password = db.read(username, "password", "???");
+            String decryptedPassword = sys.decrypt(password,env.ENCRYPTION_KEY);
             String User = "???";
             try{
                 User = String.format("%s (%s)", event.getJDA().getUserById(user).getAsTag(), user);

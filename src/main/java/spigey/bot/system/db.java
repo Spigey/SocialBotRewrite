@@ -128,7 +128,18 @@ public class db {
             sys.errInfo(L);
         }
     }
+    public static void remove(String user){
+        try {
+            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+            if (existingData.containsKey(user)) {
+                existingData.remove(user);
 
+                try (FileWriter database = new FileWriter(FILE_PATH)) {
+                    database.write(existingData.toJSONString());
+                }
+            }
+        }catch(Exception L){/**/}
+    }
     public static String get() throws Exception {
         return Files.readString(Paths.get(FILE_PATH));
     }

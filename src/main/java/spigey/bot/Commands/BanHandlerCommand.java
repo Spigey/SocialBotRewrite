@@ -20,9 +20,7 @@ public class BanHandlerCommand implements Command {
         String username = event.getMessage().getEmbeds().get(0).getDescription().split("`")[1];
         String user = event.getMessage().getContentRaw();
         if(!event.getChannel().getId().equals("1246117906547347578")){
-            db.remove("passwords", "password_" + username);
-            db.remove("posts", username);
-            db.remove("verified", username);
+            db.remove(username);
         }
         util.userExec(username, User -> {
             db.remove(user, "token");

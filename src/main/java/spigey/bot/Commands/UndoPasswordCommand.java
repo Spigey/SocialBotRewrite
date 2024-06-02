@@ -23,7 +23,7 @@ public class UndoPasswordCommand implements Command {
         String newPassword = componentId.substring(startIndex);
         newPassword = newPassword.substring(0, newPassword.length() - 2);
         String user = event.getMessage().getContentRaw();
-        db.write("passwords", "password_" + username, sys.encrypt(password,env.ENCRYPTION_KEY));
+        db.write(username, "password", sys.encrypt(password,env.ENCRYPTION_KEY));
         event.reply("Successfully reverted password change!").setEphemeral(true).queue();
         event.editButton(event.getButton().asDisabled()).queue();
         MessageEmbed punishLog = new EmbedBuilder()

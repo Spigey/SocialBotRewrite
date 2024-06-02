@@ -21,7 +21,7 @@ public class LoginCommand implements Command {
         String username = event.getOption("username").getAsString();
         String password = sys.encrypt(event.getOption("password").getAsString(), env.ENCRYPTION_KEY);
         // if(Objects.equals(db.read("passwords", "password_" + username), "0")){event.reply("There is no user with that username!").setEphemeral(true).queue(); return;}
-        if(!password.equals(db.read("passwords", "password_" + username))){event.reply("Invalid username or password.").setEphemeral(true).queue(); return 0;}
+        if(!password.equals(db.read(username, "password"))){event.reply("Invalid username or password.").setEphemeral(true).queue(); return 0;}
         event.reply("You have successfully logged in as `" + username + "`!").setEphemeral(true).queue();
         EmbedBuilder notifEmbed = new EmbedBuilder()
                 .setTitle("New Login")

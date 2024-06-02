@@ -43,11 +43,11 @@ public class PostCommand implements Command {
         if(Objects.equals(db.read(event.getUser().getId(), "account"), "0")){event.reply("You have to register first to post something!").setEphemeral(true).queue(); return 0;}
         if(Objects.equals(db.read("channels", event.getGuild().getId()), "0")){event.reply("This bot hasn't been set up on this server yet! Tell an admin to run `/setchannel <channel>`.").queue(); return 0;}
         if(event.getOption("content").getAsString().length() > 300){event.reply("Your post must at most be 300 characters in length!").setEphemeral(true).queue(); return 0;}
-        if(Objects.equals(db.read("verified", db.read(event.getUser().getId(), "account")), "0")) if(event.getOption("attachment") != null && !event.getOption("attachment").getAsAttachment().getContentType().contains("image/")){sys.warn(event.getUser().getId() + " attempted to upload " + event.getOption("attachment").getAsAttachment().getContentType()); event.reply("You are not allowed to post this file type!").setEphemeral(true).queue(); return 0;}
+        if(Objects.equals(db.read(db.read(event.getUser().getId(), "account"), "verified"), "0")) if(event.getOption("attachment") != null && !event.getOption("attachment").getAsAttachment().getContentType().contains("image/")){sys.warn(event.getUser().getId() + " attempted to upload " + event.getOption("attachment").getAsAttachment().getContentType()); event.reply("You are not allowed to post this file type!").setEphemeral(true).queue(); return 0;}
         JSONArray channelsArray = db.getArray("channels");
         String username = db.read(event.getUser().getId(), "account");
         EmbedBuilder embed = new EmbedBuilder()
-                .setTitle(String.format("New post by @%s %s", username, db.read("verified", username, "")))
+                .setTitle(String.format("New post by @%s %s", username, db.read(username, "verified", "")))
                 .setDescription(txt(event.getOption("content").getAsString()))
                 .setColor(EmbedColor.RED)
                 .setTimestamp(Instant.now());
@@ -73,7 +73,7 @@ public class PostCommand implements Command {
                         else{
                             try {
                                 EmbedBuilder img = new EmbedBuilder()
-                                        .setTitle(String.format("New post by @%s %s", username, db.read("verified", username, "")))
+                                        .setTitle(String.format("New post by @%s %s", username, db.read(username, "verified", "")))
                                         .setDescription(txt(event.getOption("content").getAsString()))
                                         .setColor(EmbedColor.RED)
                                         .setImage(event.getOption("attachment").getAsAttachment().getProxyUrl())
@@ -106,12 +106,12 @@ public class PostCommand implements Command {
         event.getJDA().getGuildById("1246040271435730975").getTextChannelById("1246040631801810986").sendMessage("").addEmbeds(embed.build()).queue(message -> {
             url.set(message.getJumpUrl());
             try {
-                db.write("posts", username, "\n[" + sys.trim(event.getOption("content").getAsString(),10) +"](" + url.get() + ")" + db.read("posts", username, ""));
+                db.write(username, "posts", "\n[" + sys.trim(event.getOption("content").getAsString(),10) +"](" + url.get() + ")" + db.read(username, "posts", ""));
             } catch (IOException | ParseException e) {
                 throw new RuntimeException(e);
             }
         });
-        if(!Objects.equals(db.read("verified", username), "0")) return 0;
+        if(!Objects.equals(db.read(username, "verified"), "0")) return 0;
         return 1;
     }
     private static String txt(String text) throws Exception {
@@ -122,7 +122,7 @@ public class PostCommand implements Command {
         while (matcher.find()) {
             String username = matcher.group(1); // Extract the username
             String mention = "[@" + username + "]" + "(http://.)"; // Construct the mention format
-            if(!Objects.equals(db.read("passwords", "password_" + username), "0")) matcher.appendReplacement(output, Matcher.quoteReplacement(mention));
+            if(!Objects.equals(db.read(username, "password"), "0")) matcher.appendReplacement(output, Matcher.quoteReplacement(mention));
         }
         matcher.appendTail(output);
         String txt = output.toString();

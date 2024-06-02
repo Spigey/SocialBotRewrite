@@ -3,19 +3,27 @@ package spigey.bot.system;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.commands.CommandAutoCompleteInteraction;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.Command;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
 
 import java.io.FileReader;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static spigey.bot.DiscordBot.jda;
 import static spigey.bot.DiscordBot.prefix;
@@ -181,5 +189,16 @@ public class util {
         } catch (Exception e) {
             // not empty
         }
+    }
+
+    public static void autoComplete(String name, String option, String[] options, CommandAutoCompleteInteractionEvent event) {
+        if (!event.getName().equals(name) && event.getFocusedOption().getName().equals(option)) return;
+        List<String> list = Arrays.asList(options);
+        List<Command.Choice> choices = list.stream()
+                .filter(word -> word.toLowerCase().startsWith(event.getFocusedOption().getValue().toLowerCase()))
+                .map(word -> new Command.Choice(word, word))
+                .limit(25) // Maximum of 25 choices allowed
+                .collect(Collectors.toList());
+        event.replyChoices(choices).queue();
     }
 }

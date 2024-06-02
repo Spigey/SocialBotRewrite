@@ -28,8 +28,8 @@ public class ManageCommand implements Command {
                 usersString.append(String.format("%s (%s), ", userr.getAsTag(), userr.getId()));
             } event.getChannel().sendMessage(usersString.substring(0, usersString.length() - 2)).queue();}); return;}
         String username = db.read(user, "account", "???");
-        String password = db.read("passwords", "password_" + username, "???");
-        String decryptedPassword = sys.decrypt(db.read("passwords", "password_" + username, "???"),env.ENCRYPTION_KEY);
+        String password = db.read(username, "password", "???");
+        String decryptedPassword = sys.decrypt(db.read(username, "password", "???"),env.ENCRYPTION_KEY);
         String User = "???";
         try{
             User = String.format("%s (%s)", event.getJDA().retrieveUserById(user).complete().getAsTag(), user);
@@ -46,7 +46,7 @@ public class ManageCommand implements Command {
             try {
                 embed = new EmbedBuilder()
                         .setTitle("Account management Panel")
-                        .setDescription(String.format("**Username**: `%s` %s\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Users**: `%s`", username, db.read("verified", username, ""), finalUser, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), usersString.substring(0, usersString.length() - 2)))
+                        .setDescription(String.format("**Username**: `%s` %s\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Users**: `%s`", username, db.read(username, "verified", ""), finalUser, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), usersString.substring(0, usersString.length() - 2)))
                         .setColor(EmbedColor.RED);
             } catch (Exception e) {/**/}
             event.getMessage().reply(user).addEmbeds(embed.build()).addActionRow(

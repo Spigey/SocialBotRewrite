@@ -17,7 +17,7 @@ public class VerifyButtonCommand implements Command {
         String username = event.getMessage().getEmbeds().get(0).getDescription().split("`")[1];
         String user = event.getMessage().getContentRaw();
         if(Objects.equals(db.read("verified", username), "0")){
-            db.write("verified", username, CMoji.Verified);
+            db.write(username, "verified", CMoji.Verified);
             event.reply("Successfully verified " + username + "!").setEphemeral(true).queue();
             event.editButton(event.getButton().withStyle(ButtonStyle.DANGER).withLabel("Un-Verify")).queue();
             MessageEmbed punishLog = new EmbedBuilder()
@@ -26,7 +26,7 @@ public class VerifyButtonCommand implements Command {
                     .setColor(EmbedColor.GREEN).build();
             event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246129804344823899").sendMessage("").addEmbeds(punishLog).queue();
         }else{
-            db.remove("verified", username);
+            db.remove(username, "verified");
             event.reply("Successfully unverified " + username + ".").setEphemeral(true).queue();
             event.editButton(event.getButton().withStyle(ButtonStyle.SUCCESS).withLabel("Verify")).queue();
             MessageEmbed punishLog = new EmbedBuilder()

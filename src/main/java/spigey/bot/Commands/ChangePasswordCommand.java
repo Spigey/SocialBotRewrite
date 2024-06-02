@@ -19,7 +19,7 @@ public class ChangePasswordCommand implements Command {
     public int slashCommand(SlashCommandInteractionEvent event) throws Exception {
         String username = db.read(event.getUser().getId(), "account");
         String self = event.getUser().getId();
-        String oldPassword = sys.decrypt(db.read("passwords", "password_" + username), env.ENCRYPTION_KEY);
+        String oldPassword = sys.decrypt(db.read(username, "password"), env.ENCRYPTION_KEY);
         if(Objects.equals(username, "0")){event.reply("You need to be logged in to use this command!").setEphemeral(true).queue(); return 0;}
         if(!event.getOption("old-password").getAsString().equals(oldPassword)){event.reply("Invalid password provided.").setEphemeral(true).queue(); return 0;}
         if(event.getOption("new-password").getAsString().length() < 6 || event.getOption("new-password").getAsString().length() > 40){event.reply("Invalid password. Must be between 6 and 24 characters in length").setEphemeral(true).queue(); return 0;}
@@ -28,7 +28,7 @@ public class ChangePasswordCommand implements Command {
                 db.remove(user.getId(), "account");
             }
         });
-        db.write("passwords", "password_" + username, sys.encrypt(event.getOption("new-password").getAsString(), env.ENCRYPTION_KEY));
+        db.write(username, "password", sys.encrypt(event.getOption("new-password").getAsString(), env.ENCRYPTION_KEY));
         event.reply("You have successfully changed your password to ||`" + event.getOption("new-password").getAsString() + "`||!").setEphemeral(true).queue();
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("Password Changed") //                                                                      ↓ that password is encrypted
