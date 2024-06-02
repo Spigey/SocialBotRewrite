@@ -1,7 +1,9 @@
 package spigey.bot.system;
 
 import net.dv8tion.jda.api.entities.User;
+import org.json.simple.parser.ParseException;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,18 +16,18 @@ public class CooldownManager {
         this.cooldownDurationMillis = cooldownDurationMillis;
     }
 
-    public boolean isActive(User user) {
-        String key = user.getId(); // Use user ID as the key in the cooldowns map
+    public boolean isActive(User user) throws IOException, ParseException {
+        String key = db.read(user.getId(), "account"); // Use user ID as the key in the cooldowns map
         return cooldowns.containsKey(key) && System.currentTimeMillis() - cooldowns.get(key) < cooldownDurationMillis;
     }
 
-    public void update(User user) {
-        String key = user.getId(); // Use user ID as the key in the cooldowns map
+    public void update(User user) throws IOException, ParseException {
+        String key = db.read(user.getId(), "account"); // Use user ID as the key in the cooldowns map
         cooldowns.put(key, System.currentTimeMillis());
     }
 
-    public String parse(User user) {
-        String key = user.getId(); // Use user ID as the key in the cooldowns map
+    public String parse(User user) throws IOException, ParseException {
+        String key = db.read(user.getId(), "account"); // Use user ID as the key in the cooldowns map
         if (cooldowns.containsKey(key)) {
             long currentTime = System.currentTimeMillis();
             long lastExecutionTime = cooldowns.get(key);
@@ -58,7 +60,7 @@ public class CooldownManager {
         }
     }
 
-    public void reset(User user) {
-        cooldowns.remove(user.getId());
+    public void reset(User user) throws IOException, ParseException {
+        cooldowns.remove(db.read(user.getId(), "account"));
     }
 }

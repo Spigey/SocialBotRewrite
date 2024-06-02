@@ -54,6 +54,7 @@ public class PostCommand implements Command {
                 .setDescription(txt(event.getOption("content").getAsString()))
                 .setColor(EmbedColor.RED)
                 .setTimestamp(Instant.now());
+        if(event.getOption("attachment") != null) embed.setImage(event.getOption("attachment").getAsAttachment().getProxyUrl());
         // Buttons
         final Button follow = Button.secondary("follow_" + username, "Follow").withEmoji(Emoji.fromUnicode("\ud83d\udc65"));
         final Button report = Button.danger("report_" + username, "Report").withEmoji(Emoji.fromUnicode("\ud83d\uded1"));
@@ -97,7 +98,7 @@ public class PostCommand implements Command {
                 post.sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue();
             }
         }
-        Pattern mentionPattern = Pattern.compile("@(\\w+)");
+        Pattern mentionPattern = Pattern.compile("@(\\w[\\w._]*)");
         Matcher matcher = mentionPattern.matcher(event.getOption("content").getAsString());
         Set<String> mentionedUsernames = new HashSet<>();
         while (matcher.find()) mentionedUsernames.add(matcher.group(1));
@@ -124,7 +125,7 @@ public class PostCommand implements Command {
 
 
     private static String txt(String text) throws Exception {
-        Pattern mentionPattern = Pattern.compile("@(\\w+)");
+        Pattern mentionPattern = Pattern.compile("@(\\w[\\w._]*)");
         // Matcher matcher = mentionPattern.matcher(new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?prompt=" + URLEncoder.encode("You're a Moderation AI. Your task is to keep posts PG13 by censoring bad words by replacing every single letter with `\\*`. Make sure to always double check that you have censored actual BAD words, and no good words. For example: `you are a retard` -> `you are a \\*\\*\\*\\*\\*\\*`, Do not censor \"fuck\" and \"shit\". If the prompt does not contain any bad words, just return the prompt again. You can ONLY reply in the censored prompt, the users prompt is: " + text + "`", StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString());
         Matcher matcher = mentionPattern.matcher(text);
         StringBuffer output = new StringBuffer();

@@ -215,4 +215,8 @@ public class sys {
         Random random = new Random();
         return choices[random.nextInt(choices.length)];
     }
+
+    public static int occur(String text, String chr){
+        return text.replaceAll("[^" + chr + "]", "").length() / chr.length();
+    }
 }

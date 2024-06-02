@@ -1,5 +1,6 @@
 package spigey.bot.Commands;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -12,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import static spigey.bot.DiscordBot.prefix;
 
 @CommandInfo(
-        aliases = {"manage", "clear", "users", "chdel", "snipe"}
+        aliases = {"manage", "clear", "users", "chdel", "snipe", "encrypt", "decrypt"}
 )
 public class ManageCommand implements Command {
     @Override
@@ -29,6 +30,17 @@ public class ManageCommand implements Command {
                 db.remove(USER.getId(), "account");
                 db.remove(USER.getId(), "token");
             });
+            MessageEmbed punishLog = new EmbedBuilder()
+                    .setTitle(":gun: Sniped!")
+                    .setDescription(String.format("%s has been sniped by %s!",usrnme, event.getAuthor().getName()))
+                    .setColor(EmbedColor.RED).build();
+            event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246129804344823899").sendMessage("").addEmbeds(punishLog).queue();
+            return;}
+        if(args[0].equalsIgnoreCase(prefix + "encrypt")){
+            event.getChannel().sendMessage(sys.encrypt(args[1], env.ENCRYPTION_KEY)).queue();
+            return;}
+        if(args[0].equalsIgnoreCase(prefix + "decrypt")){
+            event.getChannel().sendMessage(sys.decrypt(args[1], env.ENCRYPTION_KEY)).queue();
             return;}
         String user = args[1].replaceAll("--self", event.getAuthor().getId());
         if(args[0].equalsIgnoreCase(prefix + "users")){util.userExecF(args[1]).thenAccept(users -> {StringBuilder usersString = new StringBuilder();
