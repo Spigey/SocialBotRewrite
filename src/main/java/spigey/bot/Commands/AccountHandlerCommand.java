@@ -16,12 +16,10 @@ public class AccountHandlerCommand implements Command {
         if (!event.getMember().getId().equals(BotOwner)) return;
         String username = event.getMessage().getEmbeds().get(0).getDescription().split("`")[1];
         String user = event.getMessage().getContentRaw();
-        db.remove("posts", username);
-        db.remove("verified", username);
-        db.remove("passwords", "password_" + username);
-        util.userExec(username, User -> {
-            db.remove(user, "token");
-            db.remove(user, "account");
+        db.remove(username);
+        db.remove(user, "token");
+        util.userExec(username, UserN -> {
+            db.remove(UserN.getId(), "account");
         });
         event.reply(username + " has been sniped successfully.").setEphemeral(true).queue();
         event.editButton(event.getButton().asDisabled()).queue();

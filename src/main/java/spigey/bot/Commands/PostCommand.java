@@ -5,7 +5,10 @@ import com.google.gson.JsonObject;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -51,6 +54,10 @@ public class PostCommand implements Command {
                 .setDescription(txt(event.getOption("content").getAsString()))
                 .setColor(EmbedColor.RED)
                 .setTimestamp(Instant.now());
+        // Buttons
+        final Button follow = Button.secondary("follow_" + username, "Follow").withEmoji(Emoji.fromUnicode("\ud83d\udc65"));
+        final Button report = Button.danger("report_" + username, "Report").withEmoji(Emoji.fromUnicode("\ud83d\uded1"));
+
         event.reply("Successfully posted to " + channelsArray.size() + " servers!").setEphemeral(true).queue();
         for (Object obj : channelsArray) {
             JSONObject guildChannels = (JSONObject) obj;
@@ -69,7 +76,7 @@ public class PostCommand implements Command {
                         File attachment = new File(file.getParent(), event.getOption("attachment").getAsAttachment().getFileName());
                         file.renameTo(attachment);
                         if(!event.getOption("attachment").getAsAttachment().getContentType().contains("image")){
-                            finalPost.sendMessage("").addEmbeds(embed.build()).addFiles(FileUpload.fromData(attachment)).queue();}
+                            finalPost.sendMessage("").addEmbeds(embed.build()).addFiles(FileUpload.fromData(attachment)).addActionRow(follow, report).queue();}
                         else{
                             try {
                                 EmbedBuilder img = new EmbedBuilder()
@@ -78,7 +85,7 @@ public class PostCommand implements Command {
                                         .setColor(EmbedColor.RED)
                                         .setImage(event.getOption("attachment").getAsAttachment().getProxyUrl())
                                         .setTimestamp(Instant.now());
-                                finalPost.sendMessage("").addEmbeds(img.build()).queue();
+                                finalPost.sendMessage("").addEmbeds(img.build()).addActionRow(follow, report).queue();
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -87,7 +94,7 @@ public class PostCommand implements Command {
                     });
                     continue;
                 }
-                post.sendMessage("").addEmbeds(embed.build()).queue();
+                post.sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue();
             }
         }
         Pattern mentionPattern = Pattern.compile("@(\\w+)");
@@ -103,7 +110,7 @@ public class PostCommand implements Command {
         }
 
         AtomicReference<String> url = new AtomicReference<>("");
-        event.getJDA().getGuildById("1246040271435730975").getTextChannelById("1246040631801810986").sendMessage("").addEmbeds(embed.build()).queue(message -> {
+        event.getJDA().getGuildById("1246040271435730975").getTextChannelById("1246040631801810986").sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue(message -> {
             url.set(message.getJumpUrl());
             try {
                 db.write(username, "posts", "\n[" + sys.trim(event.getOption("content").getAsString(),10) +"](" + url.get() + ")" + db.read(username, "posts", ""));
@@ -114,6 +121,8 @@ public class PostCommand implements Command {
         if(!Objects.equals(db.read(username, "verified"), "0")) return 0;
         return 1;
     }
+
+
     private static String txt(String text) throws Exception {
         Pattern mentionPattern = Pattern.compile("@(\\w+)");
         // Matcher matcher = mentionPattern.matcher(new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?prompt=" + URLEncoder.encode("You're a Moderation AI. Your task is to keep posts PG13 by censoring bad words by replacing every single letter with `\\*`. Make sure to always double check that you have censored actual BAD words, and no good words. For example: `you are a retard` -> `you are a \\*\\*\\*\\*\\*\\*`, Do not censor \"fuck\" and \"shit\". If the prompt does not contain any bad words, just return the prompt again. You can ONLY reply in the censored prompt, the users prompt is: " + text + "`", StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString());
@@ -127,9 +136,9 @@ public class PostCommand implements Command {
         matcher.appendTail(output);
         String txt = output.toString();
         String bk = "\\";
-        for (String badWord : DiscordBot.badWords) {
+        /* for (String badWord : DiscordBot.badWords) {
             txt = txt.replaceAll("(?i)" + Pattern.quote(badWord), badWord.replaceAll(".", "#"));
-        }
+        } */
         return txt.replaceAll("\\\\n", "\n");
     }
 }

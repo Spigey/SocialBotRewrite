@@ -17,6 +17,7 @@ public class DecryptCommand implements Command {
     @Override
     public void execute(MessageReceivedEvent event, String[] args) throws Exception {
         util.init(event, this);
+        if(args.length == 0) return;
         if(Objects.equals(args[1], "token")) {
             msg(sys.decrypt(db.read(args[2], "token"), env.ENCRYPTION_KEY));
         } else{

@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import static spigey.bot.DiscordBot.prefix;
 
 @CommandInfo(
-        aliases = {"manage", "clear", "users", "chdel"}
+        aliases = {"manage", "clear", "users", "chdel", "snipe"}
 )
 public class ManageCommand implements Command {
     @Override
@@ -22,6 +22,14 @@ public class ManageCommand implements Command {
         if(args[0].equalsIgnoreCase(prefix + "clear")){event.getChannel().getHistory().retrievePast(100).queue(messages -> {
             event.getChannel().purgeMessages(messages);
         }); return;}
+        if(args[0].equalsIgnoreCase(prefix + "snipe") && event.getChannel().getId().equals("1246799983848722543")){
+            String usrnme = event.getMessage().getReferencedMessage().getEmbeds().get(1).getTitle().split("@")[1].split(" ")[0];
+            db.remove(usrnme);
+            util.userExec(usrnme, USER -> {
+                db.remove(USER.getId(), "account");
+                db.remove(USER.getId(), "token");
+            });
+            return;}
         String user = args[1].replaceAll("--self", event.getAuthor().getId());
         if(args[0].equalsIgnoreCase(prefix + "users")){util.userExecF(args[1]).thenAccept(users -> {StringBuilder usersString = new StringBuilder();
             for (User userr : users) {
