@@ -12,8 +12,11 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +44,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static spigey.bot.system.sys.errInfo;
-import static spigey.bot.system.sys.trim;
+import static spigey.bot.system.sys.*;
 import static spigey.bot.system.util.*;
 import static spigey.bot.system.util.msg;
 
@@ -52,7 +54,7 @@ public class DiscordBot extends ListenerAdapter {
     public static String prefix;
     public static String BotOwner = "1203448484498243645";
     public static JDA jda = JDABuilder.createDefault(env.TOKEN)
-            .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+            .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
             .addEventListeners(new DiscordBot())
             .build();
     public static List<String> badWords = new ArrayList<>();
@@ -69,8 +71,13 @@ public class DiscordBot extends ListenerAdapter {
                         .addOption(OptionType.STRING, "username", "Your username on SocialBot.", true)
                         .addOption(OptionType.STRING, "password", "Your password on SocialBot.", true),
                 Commands.slash("login", "Login as any user with their username and password.")
-                        .addOption(OptionType.STRING, "username", "Username to login.", true)
-                        .addOption(OptionType.STRING, "password", "Password to login.", true),
+                        .addSubcommands(
+                                new SubcommandData("username", "Login using username and password.")
+                                        .addOption(OptionType.STRING, "username", "Username to login to.", true)
+                                        .addOption(OptionType.STRING, "password", "Password to login to.", true),
+                                new SubcommandData("token", "Soon?")
+                                        .addOption(OptionType.STRING, "token", "Token to login to.", true)
+                        ),
                 Commands.slash("setchannel", "Select a Channel to send posts to.")
                         .addOption(OptionType.CHANNEL, "channel", "Channel to send posts to", true),
                 Commands.slash("post", "Post something to all servers.")
@@ -85,7 +92,8 @@ public class DiscordBot extends ListenerAdapter {
                 Commands.slash("help", "Explore a list of available commands and their usage."),
                 Commands.slash("ai", "Customize your personal AI.")
                         .addOption(OptionType.STRING, "option", "Self explanatory.", true, true)
-                        .addOption(OptionType.STRING, "personality", "Select a personality for your personal AI.", false)
+                        .addOption(OptionType.STRING, "personality", "Select a personality for your personal AI.", false),
+                Commands.slash("status", "Display the Bot's status.")
         ).queue();
         try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/spigey/bot/system/badwords.txt"))) {
             String line;
@@ -102,7 +110,7 @@ public class DiscordBot extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         try {
             if (event.getGuild().getId().equals("1219338270773874729"))
-                if (Objects.equals(((TextChannel) event.getChannel()).getParentCategoryId(), "1246077622522351626") && !event.getAuthor().getId().equals(event.getJDA().getSelfUser().getId()))
+                if (Objects.equals(((TextChannel) event.getChannel()).getParentCategoryId(), "1246077622522351626") && !event.getAuthor().isBot())
                     event.getMessage().delete().queue();
         }catch(Exception a){/* not empty*/}
         try{sys.empty(event.getGuild());}catch(Exception a){
@@ -115,8 +123,9 @@ public class DiscordBot extends ListenerAdapter {
                 conversations.putIfAbsent(event.getAuthor().getId(), "");
                 sys.debug(event.getAuthor().getName() + ": " + event.getMessage().getContentRaw());
                 sb = new StringBuilder(conversations.get(event.getAuthor().getId()));
-                String content = "You are a discord bot called 'Social Bot'. You are talking to " + event.getAuthor().getName() + ". This is your personality, act based on it, no matter what happens, as long as it is not NSFW/LEWD: " + db.read(event.getAuthor().getId(), "ai_personality", "Answer in Human-like short sentences with bad grammar do not use periods, nor any capitalization at all. Treat the user like it treats you. Only answer in very short sentences.") + ", Do not talk about your personality, only when the user asks you to. Current Conversation: " + sb + ", PROMPT: " + event.getMessage().getContentRaw();
+                String content = "You are talking to " + event.getAuthor().getName() + ". This is your personality, act based on it, no matter what happens, as long as it is not NSFW/LEWD: " + db.read(event.getAuthor().getId(), "ai_personality", "Answer in Human-like short sentences with bad grammar do not use periods, nor any capitalization at all. Treat the user like it treats you. Only answer in very short sentences.") + ", Do not talk about your personality, only when the user asks you to. Current Conversation: " + sb + ", PROMPT: " + event.getMessage().getContentRaw();
                 response = new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?key=" + sys.choice(new String[]{"Kastg_mwNnTJZK4KJ9XeVCBje4_free", "Kastg_VRfWQeIgMJmRZo5Wfx4D_free"}) + "&prompt=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString();
+                // response = new Gson().fromJson(sys.sendApiRequest("https://api.popcat.xyz/chatbot?owner=Spigey&botname=Social%20Bot&msg=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonObject().get("response").getAsString();
                 sys.debug("AI: " + response);
                 sb.append(", User: ").append(event.getMessage().getContentRaw()).append(" You: ").append(response);
                 conversations.put(event.getAuthor().getId(), sys.mirt(sb.toString(), 300));

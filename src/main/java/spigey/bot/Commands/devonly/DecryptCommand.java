@@ -1,12 +1,9 @@
-package spigey.bot.Commands;
+package spigey.bot.Commands.devonly;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import org.json.simple.parser.ParseException;
 import spigey.bot.system.*;
 
-import java.io.IOException;
 import java.util.Objects;
 
-import static spigey.bot.system.sys.debug;
 import static spigey.bot.system.util.content;
 import static spigey.bot.system.util.msg;
 

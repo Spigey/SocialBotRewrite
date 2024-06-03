@@ -1,9 +1,7 @@
-package spigey.bot.Commands;
+package spigey.bot.Commands.Buttons;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import spigey.bot.system.Command;
 import spigey.bot.system.CommandInfo;
-import spigey.bot.system.sys;
 import spigey.bot.system.db;
 
 import java.util.Objects;

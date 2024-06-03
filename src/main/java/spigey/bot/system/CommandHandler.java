@@ -35,36 +35,11 @@ public class CommandHandler {
     private void loadCommands() {
         try {
             debug("Registering commands", false);
-            String path = "spigey/bot/Commands";
-            files = new File(getClass().getClassLoader().getResource(path).getFile()).listFiles((dir, name) -> name.endsWith(".class"));
-            if (files == null) return;
-
-            for (File file : files) {
-                String className = "spigey.bot.Commands." + file.getName().replace(".class", "");
-                Class<?> cls = Class.forName(className);
-                if (Command.class.isAssignableFrom(cls)) {
-                    Command command = (Command) cls.getDeclaredConstructor().newInstance();
-                    String commandName = className.substring(className.lastIndexOf('.') + 1).replace("Command", "").toLowerCase();
-                    debug("Registered command " + className, false);
-                    commands.put(commandName, command);
-
-                    // Read annotations
-                    if (cls.isAnnotationPresent(CommandInfo.class)) {
-                        CommandInfo info = cls.getAnnotation(CommandInfo.class);
-                        for (String alias : info.aliases()) {
-                            debug("Registered alias " + alias + " for command " + className, false);
-                            aliasToCommandMap.put(alias.toLowerCase(), commandName);
-                        }
-
-                        // Register cooldown manager
-                        if (info.cooldown() > 0) {
-                            cooldownManagers.put(commandName, new CooldownManager(info.cooldown()));
-                        }
-                    }
-                }
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
+            File dir = new File(getClass().getClassLoader().getResource("spigey/bot/Commands").getFile());
+            loadDir(dir);
+            files = fileRecur(dir);
+        } catch (Exception e) {
+            sys.errInfo(e);
         }
     }
 
@@ -126,7 +101,10 @@ public class CommandHandler {
         try {
             for (File file : files) {
                 if (file.getName().endsWith(".class")) {
-                    Class<?> cls = Class.forName("spigey.bot.Commands." + file.getName().replace(".class", ""));
+                    Class<?> cls = Class.forName("spigey.bot." + file.getPath()
+                            .replace(File.separator, ".")  // Replace file separators with dots
+                            .substring(file.getPath().indexOf("spigey\\bot") + "spigey.bot".length() + 1) // Get class name after "spigey.bot."
+                            .replace(".class", ""));
                     if (cls.isAnnotationPresent(CommandInfo.class)) {
                         CommandInfo info = cls.getAnnotation(CommandInfo.class);
                         if (info.slashCommand().equalsIgnoreCase(event.getName())) {
@@ -207,7 +185,10 @@ public class CommandHandler {
         try {
             for (File file : files) {
                 if (file.getName().endsWith(".class")) {
-                    Class<?> cls = Class.forName("spigey.bot.Commands." + file.getName().replace(".class", ""));
+                    Class<?> cls = Class.forName("spigey.bot." + file.getPath()
+                            .replace(File.separator, ".")  // Replace file separators with dots
+                            .substring(file.getPath().indexOf("spigey\\bot") + "spigey.bot".length() + 1) // Get class name after "spigey.bot."
+                            .replace(".class", ""));
                     if (cls.isAnnotationPresent(CommandInfo.class)) {
                         CommandInfo info = cls.getAnnotation(CommandInfo.class);
                         if (info.buttonId().equalsIgnoreCase(event.getComponentId())) {
@@ -266,8 +247,52 @@ public class CommandHandler {
         }
     }
 
+    private void loadDir(File dir) throws ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        for (File file : Objects.requireNonNull(dir.listFiles())) {
+            if (file.isDirectory()) {
+                loadDir(file); // Recurse into subdirectory
+            } else if (file.getName().endsWith(".class")) {
+                String dot = ".";
+                String className = "spigey.bot." + file.getPath()
+                        .replace(File.separator, ".")  // Replace file separators with dots
+                        .substring(file.getPath().indexOf("spigey\\bot") + "spigey.bot".length() + 1) // Get class name after "spigey.bot."
+                        .replace(".class", "");        // Remove the ".class" extension
+                Class<?> cls = Class.forName(className);
+                if (Command.class.isAssignableFrom(cls)) {
+                    Command command = (Command) cls.getDeclaredConstructor().newInstance();
+                    String commandName = className.substring(className.lastIndexOf('.') + 1).replace("Command", "").toLowerCase();
+                    debug("Registered command " + className, false);
+                    commands.put(commandName, command);
 
+                    // Read annotations
+                    if (cls.isAnnotationPresent(CommandInfo.class)) {
+                        CommandInfo info = cls.getAnnotation(CommandInfo.class);
+                        for (String alias : info.aliases()) {
+                            debug("Registered alias " + alias + " for command " + className, false);
+                            aliasToCommandMap.put(alias.toLowerCase(), commandName);
+                        }
 
+                        // Register cooldown manager
+                        if (info.cooldown() > 0) {
+                            cooldownManagers.put(commandName, new CooldownManager(info.cooldown()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private File[] fileRecur(File dir) {
+        List<File> filesList = new ArrayList<>();
+        for (File file : Objects.requireNonNull(dir.listFiles())) {
+            if (file.isDirectory()) {
+                filesList.addAll(Arrays.asList(fileRecur(file)));
+            } else if (file.getName().endsWith(".class")) {
+                filesList.add(file);
+            }
+        }
+        return filesList.toArray(new File[0]);
+    }
 
     public void onMessageReceived(MessageReceivedEvent event) throws Exception {
         doTheActualShit(event);

@@ -1,7 +1,6 @@
-package spigey.bot.Commands;
+package spigey.bot.Commands.devonly;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -15,7 +14,7 @@ import static spigey.bot.system.sys.debug;
 
 
 @CommandInfo(
-        limitIds = {"1203448484498243645", "787626092248170506", "941366409399787580"},
+        limitIds = {"1203448484498243645", "787626092248170506", "941366409399787580", "632607624742961153"},
         limitMsg = ":eyes:",
         slashCommand = "dev"
 )
@@ -126,6 +125,9 @@ public class DevCommand implements Command {
             } else if(Objects.equals(args[1], "remove")){
                 db.remove(args[2], args[3]);
             }
+        } else if(Objects.equals(args[0], "say")){
+            event.reply("erm, freddy fazbar!!!??!??").setEphemeral(true).queue();
+            event.getChannel().sendMessage(sys.getExcept(args, 0, " ")).queue();
         }
         else{
             event.reply("Invalid command.").queue();

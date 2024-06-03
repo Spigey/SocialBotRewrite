@@ -1,4 +1,4 @@
-package spigey.bot.Commands;
+package spigey.bot.Commands.devonly;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
@@ -7,10 +7,12 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import spigey.bot.system.*;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static spigey.bot.DiscordBot.prefix;
+import static spigey.bot.system.sys.errInfo;
+import static spigey.bot.system.sys.error;
 
 @CommandInfo(
         aliases = {"manage", "clear", "users", "chdel", "snipe", "encrypt", "decrypt"}
@@ -49,7 +51,7 @@ public class ManageCommand implements Command {
             } event.getChannel().sendMessage(usersString.substring(0, usersString.length() - 2)).queue();}); return;}
         String username = db.read(user, "account", "???");
         String password = db.read(username, "password", "???");
-        String decryptedPassword = sys.decrypt(db.read(username, "password", "???"),env.ENCRYPTION_KEY);
+        AtomicReference<String> decryptedPassword = new AtomicReference<>(sys.decrypt(db.read(username, "password", "???"), env.ENCRYPTION_KEY));
         String User = "???";
         try{
             User = String.format("%s (%s)", event.getJDA().retrieveUserById(user).complete().getAsTag(), user);
@@ -64,11 +66,13 @@ public class ManageCommand implements Command {
             }
             EmbedBuilder embed = null;
             try {
+                try{usersString = new StringBuilder(usersString.substring(0, usersString.length() - 2));}catch(Exception L){error("Failed to retrieve users for ID " + user);}
+                if(args[2] != null && args[2].equalsIgnoreCase("-v")) decryptedPassword.set(sys.encrypt(decryptedPassword.get(), env.ENCRYPTION_KEY));
                 embed = new EmbedBuilder()
                         .setTitle("Account management Panel")
-                        .setDescription(String.format("**Username**: `%s` %s\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Users**: `%s`", username, db.read(username, "verified", ""), finalUser, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), usersString.substring(0, usersString.length() - 2)))
+                        .setDescription(String.format("**Username**: `%s` %s\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Origin**: `%s`\n**Users**: `%s`", username, db.read(username, "verified", ""), finalUser, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword.get()), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), db.read(user, "origin", "???"), usersString))
                         .setColor(EmbedColor.RED);
-            } catch (Exception e) {/**/}
+            } catch (Exception e) {errInfo(e);}
             event.getMessage().reply(user).addEmbeds(embed.build()).addActionRow(
                     Button.danger("snipe", "Snipe"),
                     Button.danger("ban", "Ban"),

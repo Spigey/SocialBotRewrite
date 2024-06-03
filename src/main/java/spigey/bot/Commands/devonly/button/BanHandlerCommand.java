@@ -1,4 +1,4 @@
-package spigey.bot.Commands;
+package spigey.bot.Commands.devonly.button;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;

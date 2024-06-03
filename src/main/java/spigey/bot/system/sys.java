@@ -7,6 +7,10 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -218,5 +222,15 @@ public class sys {
 
     public static int occur(String text, String chr){
         return text.replaceAll("[^" + chr + "]", "").length() / chr.length();
+    }
+
+    public static String getExcept(Object[] arr, int i, String seperator){
+        StringBuilder sb = new StringBuilder();
+        for(int j = 0; j < arr.length; j++){
+            if(j != i){
+                sb.append(arr[j]).append(seperator);
+            }
+        }
+        return sb.toString();
     }
 }

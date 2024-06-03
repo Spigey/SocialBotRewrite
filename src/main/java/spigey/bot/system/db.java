@@ -140,7 +140,49 @@ public class db {
             }
         }catch(Exception L){/**/}
     }
+
     public static String get() throws Exception {
         return Files.readString(Paths.get(FILE_PATH));
+    }
+
+    public static String idFromToken(String token) throws IOException, ParseException {
+        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+        for (Object userIdObj : existingData.keySet()) {
+            String userId = (String) userIdObj;
+            JSONArray userData = (JSONArray) existingData.get(userId);
+            for (Object obj : userData) {
+                JSONObject userObject = (JSONObject) obj;
+                if (userObject.containsKey("token") && userObject.get("token").equals(token)) {
+                    return userId;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static int keySize(){
+        try {
+            JSONParser parser = new JSONParser();
+            JSONObject existingData = (JSONObject) parser.parse(new FileReader(FILE_PATH));
+            return countKeysRecursive(existingData);
+        } catch(Exception L){
+            return -1;
+        }
+    }
+
+    private static int countKeysRecursive(JSONObject obj) {
+        int count = obj.size();
+        for (Object value : obj.values()) {
+            if (value instanceof JSONArray) {
+                for (Object item : (JSONArray) value) {
+                    if (item instanceof JSONObject) {
+                        count += countKeysRecursive((JSONObject) item);
+                    }
+                }
+            } else if (value instanceof JSONObject) {
+                count += countKeysRecursive((JSONObject) value);
+            }
+        }
+        return count;
     }
 }

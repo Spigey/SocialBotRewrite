@@ -150,6 +150,12 @@ public class util {
                     JSONArray userData = (JSONArray) existingData.get(userId);
                     for (Object obj : userData) {
                         JSONObject userObject = (JSONObject) obj;
+                        if (userObject.containsKey("account") && username.equals("*")) {
+                            RestAction<User> userAction = jda.retrieveUserById((String) userId);
+                            CompletableFuture<User> userFuture = new CompletableFuture<>();
+                            userAction.queue(userFuture::complete, userFuture::completeExceptionally);
+                            userFutures.add(userFuture);
+                        }
                         if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
                             RestAction<User> userAction = jda.retrieveUserById((String) userId);
                             CompletableFuture<User> userFuture = new CompletableFuture<>();
@@ -181,6 +187,11 @@ public class util {
                 JSONArray userData = (JSONArray) existingData.get(userId);
                 for (Object obj : userData) {
                     JSONObject userObject = (JSONObject) obj;
+
+                    if (userObject.containsKey("account") && username.equals("*")) {
+                        jda.retrieveUserById((String) userId).queue(action);
+                    }
+
                     if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
                         jda.retrieveUserById((String) userId).queue(action);
                     }

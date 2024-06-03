@@ -52,7 +52,7 @@ public class PostCommand implements Command {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle(String.format("New post by @%s %s", username, db.read(username, "verified", "")))
                 .setDescription(txt(event.getOption("content").getAsString()))
-                .setColor(EmbedColor.RED)
+                .setColor(EmbedColor.BLURPLE)
                 .setTimestamp(Instant.now());
         if(event.getOption("attachment") != null) embed.setImage(event.getOption("attachment").getAsAttachment().getProxyUrl());
         // Buttons
@@ -83,7 +83,7 @@ public class PostCommand implements Command {
                                 EmbedBuilder img = new EmbedBuilder()
                                         .setTitle(String.format("New post by @%s %s", username, db.read(username, "verified", "")))
                                         .setDescription(txt(event.getOption("content").getAsString()))
-                                        .setColor(EmbedColor.RED)
+                                        .setColor(EmbedColor.BLURPLE)
                                         .setImage(event.getOption("attachment").getAsAttachment().getProxyUrl())
                                         .setTimestamp(Instant.now());
                                 finalPost.sendMessage("").addEmbeds(img.build()).addActionRow(follow, report).queue();

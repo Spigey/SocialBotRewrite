@@ -28,6 +28,7 @@ public class RegisterCommand implements Command {
         db.write(user, "account", username);
         db.write(username, "password", sys.encrypt(password, env.ENCRYPTION_KEY));
         db.write(user, "token", sys.encrypt(sys.generateToken(username, password, String.format("%s%s-------------------", username, password).length() * 2), env.ENCRYPTION_KEY));
+        db.write(user, "origin", username);
         event.reply("You have successfully registered as `" + username + "`!").setEphemeral(true).queue();
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("New account registered")
