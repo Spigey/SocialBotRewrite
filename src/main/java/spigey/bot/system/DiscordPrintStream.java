@@ -18,9 +18,9 @@ public class DiscordPrintStream extends PrintStream {
 
     @Override
     public void println(String x) {
-        super.println(x);  // Print to the console as usual
+        super.println(x);
         try {
-            channel.sendMessage("```" + x + "```").queue(); // Send to Discord with code block formatting
+            channel.sendMessage("```" + x + "```").queue();
         }catch(Exception L){/**/}
     }
 }
