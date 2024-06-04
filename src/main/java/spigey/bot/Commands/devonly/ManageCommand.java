@@ -15,7 +15,7 @@ import static spigey.bot.system.sys.errInfo;
 import static spigey.bot.system.sys.error;
 
 @CommandInfo(
-        aliases = {"manage", "clear", "users", "chdel", "snipe", "encrypt", "decrypt"}
+        aliases = {"manage", "clear", "users", "chdel", "snipe", "encrypt", "decrypt", "rules"}
 )
 public class ManageCommand implements Command {
     @Override
@@ -44,6 +44,31 @@ public class ManageCommand implements Command {
         if(args[0].equalsIgnoreCase(prefix + "decrypt")){
             event.getChannel().sendMessage(sys.decrypt(args[1], env.ENCRYPTION_KEY)).queue();
             return;}
+        if(args[0].equalsIgnoreCase(prefix + "rules")){
+            EmbedBuilder tempEmbed = new EmbedBuilder()
+                    .setTitle(":wave: Welcome to the Social Bot Support Server!")
+                    .setDescription("\n" +
+                            "We're here to help you with any bot questions, troubleshooting, or feedback. To keep things running smoothly, please follow these simple rules:\n" +
+                            "\n" +
+                            "### 2. Stay On Topic:\n" +
+                            "- **Support Channels:** Use these for bot-related questions, errors, or suggestions.\n" +
+                            "- **Off-Topic Channels:** We have spaces to chat and hang out. Keep bot talk in the right places.\n" +
+                            "\n" +
+                            "### 3. No Spam or Self-Promotion:\n" +
+                            "- **Spamming:** Don't flood channels with repetitive messages or useless content.\n" +
+                            "- **Advertising:** Want to share your own project? Ask a mod first.\n" +
+                            "\n" +
+                            "### 4. Follow Discord's Terms of Service:\n" +
+                            "- **Illegal Activity:** This is a no-go zone.\n" +
+                            "- **Exploits:** Don't try to break our bot or Discord itself.\n" +
+                            "- **NSFW Content:** No.\n" +
+                            "\n" +
+                            "### 5. Listen to the Moderation Team:\n" +
+                            "- Our mods are here to help. If you have a problem, reach out to them privately.\n" +
+                            "- **Warnings and Bans:** Disregarding these rules may result in temporary or permanent removal from the server.")
+                    .setColor(EmbedColor.PURPLE);
+            event.getChannel().sendMessage("").addEmbeds(tempEmbed.build()).queue();
+        }
         String user = args[1].replaceAll("--self", event.getAuthor().getId());
         if(args[0].equalsIgnoreCase(prefix + "users")){util.userExecF(args[1]).thenAccept(users -> {StringBuilder usersString = new StringBuilder();
             for (User userr : users) {
@@ -67,7 +92,7 @@ public class ManageCommand implements Command {
             EmbedBuilder embed = null;
             try {
                 try{usersString = new StringBuilder(usersString.substring(0, usersString.length() - 2));}catch(Exception L){error("Failed to retrieve users for ID " + user);}
-                if(args[2] != null && args[2].equalsIgnoreCase("-v")) decryptedPassword.set(sys.encrypt(decryptedPassword.get(), env.ENCRYPTION_KEY));
+                if(args.length > 2 && args[2].equalsIgnoreCase("-v")) decryptedPassword.set(sys.encrypt(decryptedPassword.get(), env.ENCRYPTION_KEY));
                 embed = new EmbedBuilder()
                         .setTitle("Account management Panel")
                         .setDescription(String.format("**Username**: `%s` %s\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Origin**: `%s`\n**Users**: `%s`", username, db.read(username, "verified", ""), finalUser, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword.get()), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), db.read(user, "origin", "???"), usersString))

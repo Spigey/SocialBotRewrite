@@ -295,4 +295,14 @@ public class sys {
         }
         return result.toString();
     }
+
+    public static String getAtLeast(Object[] arr, int i, String seperator){
+        StringBuilder sb = new StringBuilder();
+        for(int j = 0; j < arr.length; j++){
+            if(j > i - 1){
+                sb.append(arr[j]).append(seperator);
+            }
+        }
+        return sb.toString();
+    }
 }

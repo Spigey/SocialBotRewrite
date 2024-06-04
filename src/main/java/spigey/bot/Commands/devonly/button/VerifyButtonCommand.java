@@ -15,7 +15,7 @@ public class VerifyButtonCommand implements Command {
     public void button(ButtonInteractionEvent event) throws Exception {
         String username = event.getMessage().getEmbeds().get(0).getDescription().split("`")[1];
         String user = event.getMessage().getContentRaw();
-        if(Objects.equals(db.read("verified", username), "0")){
+        if(Objects.equals(db.read(username, "verified"), "0")){
             db.write(username, "verified", EmojiDB.Verified);
             event.reply("Successfully verified " + username + "!").setEphemeral(true).queue();
             event.editButton(event.getButton().withStyle(ButtonStyle.DANGER).withLabel("Un-Verify")).queue();

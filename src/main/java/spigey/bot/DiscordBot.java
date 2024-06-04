@@ -6,10 +6,7 @@ import com.google.gson.JsonObject;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
-import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -22,6 +19,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -145,7 +143,7 @@ public class DiscordBot extends ListenerAdapter {
         try{if(console == null) console = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1247203483652849726");}catch(Exception L){error("Could not set console channel!");}
         // event.getJDA().getGuildById("835464812581486633").getTextChannelById("1063768951768756265").sendMessage("<@632607624742961153>").queue();
         db.add("properties", "msgs", 1);
-        if(event.getAuthor().getId().equals("1175367923506884661")) event.getMessage().reply(String.format("\"%s-\" :nerd:", event.getMessage().getContentRaw())).queue();
+        // if(event.getAuthor().getId().equals("1175367923506884661")) event.getMessage().reply(String.format("\"%s-\" :nerd:", event.getMessage().getContentRaw())).queue();
         try {
             if (event.getGuild().getId().equals("1219338270773874729"))
                 if (Objects.equals(((TextChannel) event.getChannel()).getParentCategoryId(), "1246077622522351626") && !event.getAuthor().isBot() && !event.getChannel().getId().equals("1247203483652849726"))
@@ -238,6 +236,27 @@ public class DiscordBot extends ListenerAdapter {
                             return null;
                         });
                     }
+
+
+
+                    if(args[0].equals("ai")){
+                        if(args[1].equals("reply")){
+                            User user = event.getJDA().retrieveUserById(args[2]).complete();
+                            user.openPrivateChannel().queue(channel ->
+                                    channel.retrieveMessageById(channel.getLatestMessageId())
+                                            .queue(message -> message.reply(sys.getAtLeast(args, 3, " ")).queue())
+                            );
+
+                            sys.debug("AI: " + getAtLeast(args, 3, " "));
+                        }else if (args[1].equals("reset")){
+                            conversations.remove(args[2]);
+                            sys.debug("Removed conversation history with " + event.getJDA().retrieveUserById(args[2]).complete().getName() + ".");
+                        } else if (args[1].equals("personality")) {
+                            db.write(db.read(event.getJDA().retrieveUserById(args[2]).complete().getId(), "account", ""), "ai_personality", getAtLeast(args, 3, " "));
+                            sys.debug("Updated ai personality for " + event.getJDA().retrieveUserById(args[2]).complete().getName() + ".");
+                        }
+                    }
+
 
 
                     // CONSOLE END

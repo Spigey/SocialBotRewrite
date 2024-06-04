@@ -110,6 +110,19 @@ public class PostCommand implements Command {
                     .setColor(EmbedColor.GOLD);
             util.notif(mentionedUsername, pingEmbed.build());
         }
+        EmbedBuilder followEmbed = new EmbedBuilder()
+                .setTitle(String.format("@%s has posted!", username))
+                .setDescription(txt(event.getOption("content").getAsString()))
+                .setColor(EmbedColor.BLURPLE)
+                .setTimestamp(Instant.now());
+        String[] users = db.read(username, "followers", "").split(", ");
+        String userString = db.read(username, "followers", "");
+        for(String user : users){
+            if(!util.notif(user, followEmbed.build())){
+                userString = userString.replace(user + ", ", ", ");
+            }
+        }
+        db.write(username, "followers", userString);
 
         AtomicReference<String> url = new AtomicReference<>("");
         event.getJDA().getGuildById("1246040271435730975").getTextChannelById("1246040631801810986").sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue(message -> {

@@ -9,7 +9,9 @@ import java.util.Objects;
 
 
 @CommandInfo(
-        slashCommand = "friends"
+        slashCommand = "friends",
+        usage = "<add/remove/list> [username]",
+        description = "Add or remove friends."
 )
 public class FriendsCommand implements Command {
     @Override

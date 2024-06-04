@@ -118,7 +118,8 @@ public class util {
         }
         return out;
     }
-    public static void notif(String username, MessageEmbed embed) throws Exception {
+    public static boolean notif(String username, MessageEmbed embed) throws Exception {
+        boolean found = false;
         JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
         for (Object userId : existingData.keySet()) {
             JSONArray userData = (JSONArray) existingData.get(userId);
@@ -127,6 +128,7 @@ public class util {
                 if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
                     User user = jda.retrieveUserById((String) userId).complete();
                     if (user != null) {
+                        found = true;
                         user.openPrivateChannel().queue(privateChannel -> {
                             privateChannel.sendMessage("").addEmbeds(embed).queue();
                         });
@@ -134,6 +136,7 @@ public class util {
                 }
             }
         }
+        return found;
     }
 
     public static void notif(String username, MessageEmbed embed, Button... buttons) throws Exception {
@@ -188,7 +191,7 @@ public class util {
                         .thenRun(() -> future.complete(retrievedUsers));
 
             } catch (Exception e) {
-                future.completeExceptionally(e); // Handle the exception
+                future.completeExceptionally(e);
             }
         });
 
@@ -197,7 +200,8 @@ public class util {
 
 
 
-    public static void userExec(String username, Consumer<User> action) {
+    public static boolean userExec(String username, Consumer<User> action) {
+        boolean found = false;
         try {
             JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
             for (Object userId : existingData.keySet()) {
@@ -207,16 +211,19 @@ public class util {
 
                     if (userObject.containsKey("account") && username.equals("*")) {
                         jda.retrieveUserById((String) userId).queue(action);
+                        found = true;
                     }
 
                     if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
                         jda.retrieveUserById((String) userId).queue(action);
+                        found = true;
                     }
                 }
             }
         } catch (Exception e) {
             // not empty
         }
+        return found;
     }
 
     public static void autoComplete(String name, String option, String[] options, CommandAutoCompleteInteractionEvent event) {
