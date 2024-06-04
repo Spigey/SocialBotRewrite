@@ -7,12 +7,10 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 public class DiscordPrintStream extends PrintStream {
-    private final JDA jda;
     private final TextChannel channel;
 
-    public DiscordPrintStream(OutputStream out, JDA jda, TextChannel channel) {
+    public DiscordPrintStream(OutputStream out, TextChannel channel) {
         super(out);
-        this.jda = jda;
         this.channel = channel;
     }
 

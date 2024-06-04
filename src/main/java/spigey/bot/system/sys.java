@@ -181,7 +181,7 @@ public class sys {
     public static String generateToken(String username, String password, int length) throws NoSuchAlgorithmException {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._%$#@;:,&=+!";
         StringBuilder sb = new StringBuilder();
-        String seed = env.getTokenSeed(username, password, generateKey(env.ENCRYPTION_KEY));
+        String seed = String.format(env.TOKEN_SEED, username, password, generateKey(env.ENCRYPTION_KEY));
         Random random = new Random(seed.hashCode());
         for(int i = 0; i < length; i++){
             int index = random.nextInt(chars.length());
@@ -259,7 +259,40 @@ public class sys {
         return lineCount;
     }
 
+    public static int codeChars(String directoryPath) throws IOException {
+        File directory = new File(directoryPath);
+        int charCount = 0;
+
+        for (File file : directory.listFiles()) {
+            if (file.isDirectory()) {
+                charCount += codeChars(file.getAbsolutePath()); // Recurse into subdirectories
+            } else if (file.getName().endsWith(".java")) {
+                List<String> lines = Files.readAllLines(Path.of(file.getAbsolutePath()));
+                for(String line : lines){
+                    charCount += line.length();
+                }
+            }
+        }
+        return charCount;
+    }
+
+
     public static double fileSize(String path){
         return (double) new File(path).length() / (1024 * 1024);
+    }
+
+    public static String replaceXth(String input, String target, String replacement, int interval) {
+        if (interval < 1 || target.isEmpty()) return input;
+        StringBuilder result = new StringBuilder();
+        int count = 0;
+        int i = 0;
+        while (i < input.length()) {
+            int foundIndex = input.indexOf(target, i);
+            if (foundIndex == -1) {result.append(input.substring(i));break;}
+            count++;
+            if (count % interval == 0) {result.append(input, i, foundIndex).append(replacement);} else {result.append(input, i, foundIndex + target.length());}
+            i = foundIndex + target.length();
+        }
+        return result.toString();
     }
 }

@@ -1,10 +1,13 @@
 package spigey.bot.system;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -12,6 +15,7 @@ import org.json.simple.parser.JSONParser;
 import net.dv8tion.jda.api.interactions.commands.Command;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
@@ -132,6 +136,24 @@ public class util {
         }
     }
 
+    public static void notif(String username, MessageEmbed embed, Button... buttons) throws Exception {
+        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
+        for (Object userId : existingData.keySet()) {
+            JSONArray userData = (JSONArray) existingData.get(userId);
+            for (Object obj : userData) {
+                JSONObject userObject = (JSONObject) obj;
+                if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
+                    User user = jda.retrieveUserById((String) userId).complete();
+                    if (user != null) {
+                        user.openPrivateChannel().queue(privateChannel -> {
+                            privateChannel.sendMessage("").addEmbeds(embed).addActionRow(buttons).queue();
+                        });
+                    }
+                }
+            }
+        }
+    }
+
     public static CompletableFuture<List<User>> userExecF(String username) {
         CompletableFuture<List<User>> future = new CompletableFuture<>();
         List<User> retrievedUsers = new ArrayList<>();
@@ -206,5 +228,9 @@ public class util {
                 .limit(25) // Maximum of 25 choices allowed
                 .collect(Collectors.toList());
         event.replyChoices(choices).queue();
+    }
+
+    public static void deleteIn(Message message, long delay, TimeUnit unit) {
+        message.delete().queueAfter(delay, unit);
     }
 }

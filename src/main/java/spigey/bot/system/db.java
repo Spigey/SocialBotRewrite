@@ -10,9 +10,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Objects;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static spigey.bot.system.util.log;
 
@@ -187,4 +187,64 @@ public class db {
         }
         return count;
     }
+    public static int clean() {
+        try {
+            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+            int rem = cleanJSONObject(existingData); // No initial rm needed
+
+            try (FileWriter database = new FileWriter(FILE_PATH)) {
+                database.write(existingData.toJSONString());
+            }
+
+            return rem;
+        } catch (Exception L) {
+            sys.errInfo(L);
+            return 0; // Return 0 in case of error
+        }
+    }
+
+    private static int cleanJSONObject(JSONObject obj) {
+        int removedCount = 0;
+
+        for (Iterator<String> iterator = obj.keySet().iterator(); iterator.hasNext();) {
+            String key = iterator.next();
+            Object value = obj.get(key);
+
+            if (value instanceof String) {
+                String strValue = (String) value;
+                if (strValue.trim().isEmpty()) {
+                    iterator.remove();
+                    removedCount++; // Increment counter for removed empty string
+                }
+            } else if (value instanceof JSONArray) {
+                JSONArray array = (JSONArray) value;
+                for (Iterator<Object> arrayIterator = array.iterator(); arrayIterator.hasNext();) {
+                    Object elem = arrayIterator.next();
+                    if (elem instanceof JSONObject) {
+                        removedCount += cleanJSONObject((JSONObject) elem); // Accumulate count from nested object
+                        if (((JSONObject) elem).isEmpty()) {
+                            arrayIterator.remove();
+                            removedCount++; // Increment counter for removed nested empty object
+                        }
+                    } else if (elem instanceof JSONArray && ((JSONArray) elem).isEmpty()) {
+                        arrayIterator.remove();
+                        removedCount++; // Increment counter for removed nested empty array
+                    }
+                }
+                if (array.isEmpty()) {
+                    iterator.remove();
+                    removedCount++; // Increment counter for removed empty array
+                }
+            } else if (value instanceof JSONObject) {
+                removedCount += cleanJSONObject((JSONObject) value); // Accumulate count from nested object
+                if (((JSONObject) value).isEmpty()) {
+                    iterator.remove();
+                    removedCount++; // Increment counter for removed nested empty object
+                }
+            }
+        }
+
+        return removedCount; // Return the count of removed elements
+    }
+
 }

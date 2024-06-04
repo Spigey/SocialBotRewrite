@@ -41,6 +41,7 @@ public class StatusCommand implements Command {
         int shardCount = event.getJDA().getShardInfo() != null ? event.getJDA().getShardInfo().getShardTotal() : 1;
         int currentShard = event.getJDA().getShardInfo() != null ? event.getJDA().getShardInfo().getShardId() : 0;
         int lines = sys.codeLines("src/main/java/spigey/bot/");
+        int chars = sys.codeChars("src/main/java/spigey/bot");
         String commandsProcessed = db.read("properties", "cmds"); // wow, this is not AI generated
         NetworkIF[] networkIFs = si.getHardware().getNetworkIFs().toArray(new NetworkIF[0]);
         long bytesSent = networkIFs[0].getBytesSent();
@@ -90,6 +91,7 @@ public class StatusCommand implements Command {
                         .addField(":globe_with_meridians: **Commands Processed**", String.format("```%s```", commandsProcessed), true)
                         .addField(":speech_balloon: **Messages Processed**", String.format("```%s```", messagesProcessed), true)
                         .addField(":incoming_envelope: **Bytes sent/received**", String.format("```%s/%s```", bytesSent, bytesReceived), true)
+                        .addField(":page_facing_up: **Code Characters**", String.format("```%s```", chars), true)
                         .setColor(status.get());
             } catch (Exception L){/**/}
             assert embed != null;

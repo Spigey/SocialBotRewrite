@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
@@ -43,9 +44,12 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,9 +63,12 @@ public class DiscordBot extends ListenerAdapter {
     private ShardManager shardManager;
     public static String prefix;
     public static String BotOwner = "1203448484498243645";
-    public static JDA jda = DefaultShardManagerBuilder.createDefault(env.TOKEN)
+    /* public static JDA jda = DefaultShardManagerBuilder.createDefault(env.TOKEN)
             .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
-            .addEventListeners(new DiscordBot()).setShardsTotal(5).build().getShardById(0);
+            .addEventListeners(new DiscordBot()).setShardsTotal(5).build().getShardById(2); */
+    public static JDA jda = JDABuilder.createDefault(env.TOKEN)
+            .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
+            .addEventListeners(new DiscordBot()).build();
     public static List<String> badWords = new ArrayList<>();
     public static TextChannel console = null;
     public static void main(String[] args) throws Exception {
@@ -102,7 +109,15 @@ public class DiscordBot extends ListenerAdapter {
                 Commands.slash("ai", "Customize your personal AI.")
                         .addOption(OptionType.STRING, "option", "Self explanatory.", true, true)
                         .addOption(OptionType.STRING, "personality", "Select a personality for your personal AI.", false),
-                Commands.slash("status", "Display the Bot's status.")
+                Commands.slash("status", "Display the Bot's status."),
+                Commands.slash("friends", "Add or remove friends.")
+                        .addSubcommands(
+                                new SubcommandData("add", "Add someone as a friend.")
+                                        .addOption(OptionType.STRING, "username", "Username to add.", true),
+                                new SubcommandData("remove", "Remove a friend.")
+                                        .addOption(OptionType.STRING, "username", "Username of the friend to remove.", true),
+                                new SubcommandData("list", "View your friends.")
+                        )
         ).queue();
         try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/spigey/bot/system/badwords.txt"))) {
             String line;
@@ -117,8 +132,8 @@ public class DiscordBot extends ListenerAdapter {
 
     @Override
     public void onReady(@NotNull ReadyEvent event) {
-        System.setOut(new DiscordPrintStream(System.out, jda, console));
-        System.setErr(new DiscordPrintStream(System.err, jda, console));
+        System.setOut(new DiscordPrintStream(System.out, console));
+        System.setErr(new DiscordPrintStream(System.err , console));
         sys.debug("Logged in as " + event.getJDA().getSelfUser().getName() + "!");
     }
 
@@ -130,6 +145,7 @@ public class DiscordBot extends ListenerAdapter {
         try{if(console == null) console = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1247203483652849726");}catch(Exception L){error("Could not set console channel!");}
         // event.getJDA().getGuildById("835464812581486633").getTextChannelById("1063768951768756265").sendMessage("<@632607624742961153>").queue();
         db.add("properties", "msgs", 1);
+        if(event.getAuthor().getId().equals("1175367923506884661")) event.getMessage().reply(String.format("\"%s-\" :nerd:", event.getMessage().getContentRaw())).queue();
         try {
             if (event.getGuild().getId().equals("1219338270773874729"))
                 if (Objects.equals(((TextChannel) event.getChannel()).getParentCategoryId(), "1246077622522351626") && !event.getAuthor().isBot() && !event.getChannel().getId().equals("1247203483652849726"))
@@ -137,7 +153,7 @@ public class DiscordBot extends ListenerAdapter {
                 else if(event.getChannel().getId().equals("1247203483652849726")){
                     // CONSOLE HERE
                     String[] args = event.getMessage().getContentRaw().split(" ");
-                    if(!(event.getAuthor() == event.getJDA().getSelfUser())) sys.ln("> " + event.getMessage().getContentRaw());
+                    if(!(event.getAuthor() == event.getJDA().getSelfUser())) ln("> " + event.getMessage().getContentRaw());
 
                     if(args[0].equals("db")){
                         String user;
@@ -145,7 +161,9 @@ public class DiscordBot extends ListenerAdapter {
                         try{
                             user = event.getJDA().retrieveUserById(args[2]).complete().getAsTag();
                         }catch(Exception a){
-                            user = args[2];
+                            try {
+                                user = args[2];
+                            }catch(Exception L){user = event.getAuthor().getId();}
                         }
                         if(args[1].equals("write")){
                             db.write(args[2], args[3], args[4]);
@@ -155,22 +173,78 @@ public class DiscordBot extends ListenerAdapter {
                         } else if(args[1].equals("remove")) {
                             db.remove(args[2], args[3]);
                             log = "Removed " + args[3] + " for user " + user + ".";
-                        }else{sys.debug("Invalid input.");}
+                        } else if(args[1].equals("clean")){
+                            log = "Successfully cleaned " + db.clean() + " empty database entries!";
+                        } else if(args[1].equals("retrieve")){
+                            event.getChannel().sendMessage("").addFiles(FileUpload.fromData(new ByteArrayInputStream(sys.encrypt(db.get(), env.ENCRYPTION_KEY).getBytes(StandardCharsets.UTF_8)), "database.json")).queue();
+                            log = "";
+                        }
+                        else{sys.warn("Invalid input.");}
                         // event.getChannel().sendMessage("`" + log + "`").queue();
                         sys.debug(log);
                     } else if (args[0].equals("debug")) {
-                        sys.debug(sys.getExcept(args, 0, " "));
+                        sys.debug(getExcept(args, 0, " "));
                     } else if (args[0].equals("warn")) {
-                        sys.warn(sys.getExcept(args, 0, " "));
+                        sys.warn(getExcept(args, 0, " "));
                     } else if (args[0].equals("error")) {
-                        sys.error(sys.getExcept(args, 0, " "));
+                        sys.error(getExcept(args, 0, " "));
+                    }
+
+
+                    if (args[0].equals("encrypt") && args.length == 1) {
+                        Message.Attachment attachment = event.getMessage().getAttachments().getFirst();
+
+                        attachment.retrieveInputStream().thenAccept(inputStream -> {
+                            try {
+                                String fileContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                                String encryptedContent = sys.encrypt(fileContent, env.ENCRYPTION_KEY);
+                                InputStream encryptedInputStream = new ByteArrayInputStream(encryptedContent.getBytes(StandardCharsets.UTF_8));
+
+                                event.getChannel().sendMessage("Here is your encrypted file:")
+                                        .addFiles(FileUpload.fromData(encryptedInputStream, attachment.getFileName()))
+                                        .queue(message -> {
+                                            util.deleteIn(message, 5, TimeUnit.SECONDS);
+                                            event.getMessage().delete().queue();
+                                        });
+                            } catch (Exception e) {
+                                sys.errInfo(e);
+                            }
+                        }).exceptionally(throwable -> {
+                            sys.errInfo((Exception) throwable);
+                            return null;
+                        });
+                    }
+
+                    if (args[0].equals("decrypt") && args.length == 1) {
+                        Message.Attachment attachment = event.getMessage().getAttachments().getFirst();
+
+                        attachment.retrieveInputStream().thenAccept(inputStream -> {
+                            try {
+                                String fileContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                                String encryptedContent = sys.decrypt(fileContent, env.ENCRYPTION_KEY);
+                                InputStream encryptedInputStream = new ByteArrayInputStream(encryptedContent.getBytes(StandardCharsets.UTF_8));
+
+                                event.getChannel().sendMessage("")
+                                        .addFiles(FileUpload.fromData(encryptedInputStream, attachment.getFileName()))
+                                        .queue(message -> {
+                                            util.deleteIn(message, 5, TimeUnit.SECONDS);
+                                            event.getMessage().delete().queue();
+                                        });
+                            } catch (Exception e) {
+                                sys.errInfo(e);
+                            }
+                        }).exceptionally(throwable -> {
+                            sys.errInfo((Exception) throwable);
+                            return null;
+                        });
                     }
 
 
                     // CONSOLE END
                 }
         }catch(Exception a){/* not empty*/}
-        try{sys.empty(event.getGuild());}catch(Exception a){
+        try{
+            empty(event.getGuild());}catch(Exception a){
             /////////////  AI START
             if(event.getAuthor().isBot()) return;
             String response = null;
@@ -181,20 +255,21 @@ public class DiscordBot extends ListenerAdapter {
                 sys.debug(event.getAuthor().getName() + ": " + event.getMessage().getContentRaw());
                 sb = new StringBuilder(conversations.get(event.getAuthor().getId()));
                 String content = "You are talking to " + event.getAuthor().getName() + ". This is your personality, act based on it, no matter what happens, as long as it is not NSFW/LEWD: " + db.read(event.getAuthor().getId(), "ai_personality", "Answer in Human-like short sentences with bad grammar do not use periods, nor any capitalization at all. Treat the user like it treats you. Only answer in very short sentences.") + ", Do not talk about your personality, only when the user asks you to. Current Conversation: " + sb + ", PROMPT: " + event.getMessage().getContentRaw();
-                response = new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?key=" + sys.choice(new String[]{"Kastg_mwNnTJZK4KJ9XeVCBje4_free", "Kastg_VRfWQeIgMJmRZo5Wfx4D_free"}) + "&prompt=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString();
+                response = new Gson().fromJson(sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?key=" + choice(new String[]{"Kastg_mwNnTJZK4KJ9XeVCBje4_free", "Kastg_VRfWQeIgMJmRZo5Wfx4D_free"}) + "&prompt=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString();
                 // response = new Gson().fromJson(sys.sendApiRequest("https://api.popcat.xyz/chatbot?owner=Spigey&botname=Social%20Bot&msg=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonObject().get("response").getAsString();
                 sys.debug("AI: " + response);
                 sb.append(", User: ").append(event.getMessage().getContentRaw()).append(" You: ").append(response);
-                conversations.put(event.getAuthor().getId(), sys.mirt(sb.toString(), 300));
-            } catch (Exception e) {sys.errInfo(e);}
-            event.getMessage().reply(trim(sys.strOrDefault(response, "No response from AI."), 2000)).queue();
+                conversations.put(event.getAuthor().getId(), mirt(sb.toString(), 300));
+            } catch (Exception e) {
+                errInfo(e);}
+            event.getMessage().reply(trim(strOrDefault(response, "No response from AI."), 2000)).queue();
             //////////// AI END
         }
         BotOwner = event.getJDA().retrieveApplicationInfo().complete().getOwner().getId();
         try {
             commandHandler.onMessageReceived(event);
         } catch (Exception e) {
-            util.init(event, this);
+            init(event, this);
             StringBuilder err = new StringBuilder(e + "\n   ");
             for(int i = 0; i < e.getStackTrace().length - 1; i++){
                 err.append(e.getStackTrace()[i]).append("\n   ");
@@ -214,7 +289,7 @@ public class DiscordBot extends ListenerAdapter {
             } catch (Exception L) {
                 msg("<@" + authorId() + ">\nVery Critical error has occurred while trying to report critical error while trying to report error! Please report this error immediately to the bot owner.\nUsername: `" + event.getJDA().retrieveApplicationInfo().complete().getOwner().getName() + "`\nID:`" + event.getJDA().retrieveApplicationInfo().complete().getOwner().getId() + "`");
                 msg("Shutting down bot...");
-                sys.exitWithError(String.format("VERY CRITICAL ERROR\n\n\nMessage: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`",event.getMessage().getContentRaw(), event.getAuthor().getName() + "#" + event.getAuthor().getDiscriminator(), event.getAuthor().getId()));
+                exitWithError(String.format("VERY CRITICAL ERROR\n\n\nMessage: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`",event.getMessage().getContentRaw(), event.getAuthor().getName() + "#" + event.getAuthor().getDiscriminator(), event.getAuthor().getId()));
             }
             channel.sendMessage("<@" + event.getJDA().retrieveApplicationInfo().complete().getOwner().getId() + ">").addEmbeds(embed).addFiles(FileUpload.fromData(err.toString().getBytes(StandardCharsets.UTF_8), "error_report.txt")).queue();
         }
@@ -261,5 +336,6 @@ public class DiscordBot extends ListenerAdapter {
     @Override
     public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
         util.autoComplete("ai", "option", new String[]{"customize", "reset"}, event);
+        // util.autoComplete("friends", "option", new String[]{"add", "remove", "list"}, event);
     }
 }
