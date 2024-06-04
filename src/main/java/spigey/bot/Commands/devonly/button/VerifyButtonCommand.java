@@ -16,7 +16,7 @@ public class VerifyButtonCommand implements Command {
         String username = event.getMessage().getEmbeds().get(0).getDescription().split("`")[1];
         String user = event.getMessage().getContentRaw();
         if(Objects.equals(db.read("verified", username), "0")){
-            db.write(username, "verified", CMoji.Verified);
+            db.write(username, "verified", EmojiDB.Verified);
             event.reply("Successfully verified " + username + "!").setEphemeral(true).queue();
             event.editButton(event.getButton().withStyle(ButtonStyle.DANGER).withLabel("Un-Verify")).queue();
             MessageEmbed punishLog = new EmbedBuilder()

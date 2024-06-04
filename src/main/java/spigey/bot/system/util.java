@@ -5,12 +5,10 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.interactions.commands.CommandAutoCompleteInteraction;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
 
 import java.util.*;
@@ -20,10 +18,7 @@ import java.util.stream.Collectors;
 import java.io.FileReader;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static spigey.bot.DiscordBot.jda;
 import static spigey.bot.DiscordBot.prefix;
@@ -89,33 +84,33 @@ public class util {
         String out;
         switch(pickaxe){
             case "Wooden Pickaxe":
-                out = CMoji.WoodenPickaxe;
+                out = EmojiDB.WoodenPickaxe;
                 break;
             case "Stone Pickaxe":
-                out = CMoji.StonePickaxe;
+                out = EmojiDB.StonePickaxe;
                 break;
             case "Iron Pickaxe":
-                out = CMoji.IronPickaxe;
+                out = EmojiDB.IronPickaxe;
                 break;
             case "Diamond Pickaxe":
-                out = CMoji.DiamondPickaxe;
+                out = EmojiDB.DiamondPickaxe;
                 break;
             case "Golden Pickaxe":
-                out = CMoji.GoldPickaxe;
+                out = EmojiDB.GoldPickaxe;
             case "Netherite Pickaxe":
-                out = CMoji.NetheritePickaxe;
+                out = EmojiDB.NetheritePickaxe;
                 break;
             case "Apologies Pickaxe":
-                out = CMoji.ApologiesPickaxe;
+                out = EmojiDB.ApologiesPickaxe;
                 break;
             case "Dev Pickaxe":
-                out = CMoji.DevPickaxe;
+                out = EmojiDB.DevPickaxe;
                 break;
             case "Premium Pickaxe":
-                out = CMoji.PremiumPickaxe;
+                out = EmojiDB.PremiumPickaxe;
                 break;
             default:
-                out = CMoji.NoPickaxe;
+                out = EmojiDB.NoPickaxe;
         }
         return out;
     }

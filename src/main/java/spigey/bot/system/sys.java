@@ -6,6 +6,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -16,10 +17,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import com.nulabinc.zxcvbn.*;
+import spigey.bot.DiscordBot;
 // compile 'com.nulab-inc:zxcvbn:1.9.0'
 
 public class sys {
@@ -105,22 +109,29 @@ public class sys {
 
     // Logging functions
 
-    public static void ln(Object message) {
-        System.out.println(message);
-    }
+    public static void ln(Object message) {System.out.println(message);}
     public static void log(Object message){
         System.out.print(message);
     }
     public static void debug(Object content) {
-        ln("\u001B[42;30m[DEBUG]: " + content + " \u001B[49m");
+        ln("\u001B[42;30m[DEBUG]: " + content + " \u001B[49m\u001B[0m");
+        try {
+            DiscordBot.console.sendMessage("```[DEBUG]: " + content + "```").queue();
+        }catch (Exception L){/**/}
     }
 
     public static void error(Object content) {
         ln("\u001B[41;30m[ERROR]: " + content + "\u001B[0m");
+        try{
+            DiscordBot.console.sendMessage("```[ERROR]: " + content + "```").queue();
+        }catch (Exception L){/**/}
     }
 
     public static void warn(Object content) {
         ln("\u001B[43;30m[WARN]: " + content + "\u001B[0m");
+        try{
+            DiscordBot.console.sendMessage("```[WARN]: " + content + "```").queue();
+        }catch (Exception L){/**/}
     }
 
     public static String encrypt(String text, String encryptionKey) throws Exception {
@@ -232,5 +243,23 @@ public class sys {
             }
         }
         return sb.toString();
+    }
+
+    public static int codeLines(String directoryPath) throws IOException {
+        File directory = new File(directoryPath);
+        int lineCount = 0;
+
+        for (File file : directory.listFiles()) {
+            if (file.isDirectory()) {
+                lineCount += codeLines(file.getAbsolutePath()); // Recurse into subdirectories
+            } else if (file.getName().endsWith(".java")) {
+                lineCount += Files.readAllLines(Path.of(file.getAbsolutePath())).size();
+            }
+        }
+        return lineCount;
+    }
+
+    public static double fileSize(String path){
+        return (double) new File(path).length() / (1024 * 1024);
     }
 }

@@ -1,7 +1,6 @@
 package spigey.bot.Commands;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import spigey.bot.system.*;
 
 import java.io.File;
@@ -23,7 +22,7 @@ public class HelpCommand implements Command {
             CommandInfo commandInfo = clazz.getAnnotation(CommandInfo.class);
             if(commandInfo == null) continue;
             if (!Objects.equals(commandInfo.slashCommand(), "") && !Objects.equals(commandInfo.slashCommand(), "dev")) {
-                desc.append(String.format("**`/%s %s`**:\n" + CMoji.NoPickaxe + "\u255a %s\n", commandInfo.slashCommand(), commandInfo.usage() , commandInfo.description()).replaceAll(" USAGE",""));
+                desc.append(String.format("**`/%s %s`**:\n" + EmojiDB.NoPickaxe + "\u255a %s\n", commandInfo.slashCommand(), commandInfo.usage() , commandInfo.description()).replaceAll(" USAGE",""));
             }
         }
         EmbedBuilder embed = new EmbedBuilder()

@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.json.simple.parser.ParseException;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class CommandHandler {
         return cooldownManagers.get(commandName);
     }
 
-    public void doTheActualShit(MessageReceivedEvent event) throws IOException {
+    public void doTheActualShit(MessageReceivedEvent event) throws IOException, ParseException {
         String[] split = event.getMessage().getContentRaw().split(" ");
         if (!split[0].startsWith(prefix)) return;
 
@@ -63,6 +64,7 @@ public class CommandHandler {
         Command command = commands.get(resolvedCommandName);
 
         if (command != null) {
+            db.add("properties", "cmds", 1);
             String[] args = new String[split.length - 1];
             System.arraycopy(split, 1, args, 0, args.length);
             try {
@@ -96,7 +98,8 @@ public class CommandHandler {
         }
     }
 
-    public void onSlashCommand(SlashCommandInteractionEvent event){
+    public void onSlashCommand(SlashCommandInteractionEvent event) throws IOException, ParseException {
+        db.add("properties", "cmds", 1);
         Command command = null;
         try {
             for (File file : files) {
@@ -179,8 +182,9 @@ public class CommandHandler {
     }
 
 
-    public void onButton(ButtonInteractionEvent event) {
+    public void onButton(ButtonInteractionEvent event) throws IOException, ParseException {
         List<Command> commandsToExecute = new ArrayList<>();
+        db.add("properties", "cmds", 1);
 
         try {
             for (File file : files) {
@@ -223,6 +227,7 @@ public class CommandHandler {
                     }
                 }
             } catch (Exception e) {
+                try{
                 StringBuilder err = new StringBuilder(e + "\n   ");
                 for (int i = 0; i < e.getStackTrace().length - 1; i++) {
                     err.append(e.getStackTrace()[i]).append("\n   ");
@@ -236,13 +241,12 @@ public class CommandHandler {
                         .setDescription(String.format("Message: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`", event.getMessage().getContentRaw(), event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()))
                         .setColor(EmbedColor.RED)
                         .build();
-                try {
                     Path temp = Files.createTempFile("error", ".txt");
                     Files.writeString(temp, err);
+                channel.sendMessage("<@" + event.getJDA().retrieveApplicationInfo().complete().getOwner().getId() + ">").addEmbeds(embed).addFiles(FileUpload.fromData(err.toString().getBytes(StandardCharsets.UTF_8), "error_report.txt")).queue();
                 } catch (Exception L) {
                     sys.exitWithError(String.format("VERY CRITICAL ERROR\n\n\nMessage: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`", event.getMessage().getContentRaw(), event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()));
                 }
-                channel.sendMessage("<@" + event.getJDA().retrieveApplicationInfo().complete().getOwner().getId() + ">").addEmbeds(embed).addFiles(FileUpload.fromData(err.toString().getBytes(StandardCharsets.UTF_8), "error_report.txt")).queue();
             }
         }
     }

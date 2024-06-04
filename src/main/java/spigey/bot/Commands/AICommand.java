@@ -7,7 +7,9 @@ import spigey.bot.system.db;
 import spigey.bot.system.util;
 
 @CommandInfo(
-        slashCommand = "ai"
+        slashCommand = "ai",
+        description = "Customize your personal AI.",
+        usage = "<option> [personality]"
 )
 public class AICommand implements Command {
     @Override

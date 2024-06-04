@@ -10,7 +10,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import static spigey.bot.system.util.log;
 
@@ -77,14 +79,16 @@ public class db {
         return defaultValue;
     }
 
-    public static void add(String user, String key, int value) throws IOException, ParseException {
-        if (Objects.equals(read(user, key), getDefaultValue())) {
-            log("Adding key " + key + " to user " + user);
-            write(user, key, String.valueOf(value));
-            return;
-        }
-        int existingValue = (read(user, key) != null) ? Integer.parseInt(read(user, key)) : 0;
-        write(user, key, String.valueOf(existingValue + value));
+    public static void add(String user, String key, int value){
+        try {
+            if (Objects.equals(read(user, key), getDefaultValue())) {
+                log("Adding key " + key + " to user " + user);
+                write(user, key, String.valueOf(value));
+                return;
+            }
+            int existingValue = (read(user, key) != null) ? Integer.parseInt(read(user, key)) : 0;
+            write(user, key, String.valueOf(existingValue + value));
+        }catch (Exception L){sys.errInfo(L);}
     }
 
     public static JSONArray getArray(String array) throws IOException, ParseException {
@@ -160,27 +164,25 @@ public class db {
         return null;
     }
 
-    public static int keySize(){
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject existingData = (JSONObject) parser.parse(new FileReader(FILE_PATH));
-            return countKeysRecursive(existingData);
-        } catch(Exception L){
-            return -1;
-        }
+    public static int keySize() throws IOException, ParseException {
+        JSONParser parser = new JSONParser();
+        JSONObject existingData = (JSONObject) parser.parse(new FileReader(FILE_PATH));
+        return countKeysRecursive(existingData);
     }
 
     private static int countKeysRecursive(JSONObject obj) {
-        int count = obj.size();
+        int count = obj.size();  // Count keys at the current level
+
         for (Object value : obj.values()) {
             if (value instanceof JSONArray) {
-                for (Object item : (JSONArray) value) {
+                JSONArray jsonArray = (JSONArray) value;
+                for (Object item : jsonArray) {
                     if (item instanceof JSONObject) {
-                        count += countKeysRecursive((JSONObject) item);
+                        count += countKeysRecursive((JSONObject) item);  // Recurse into objects within the array
                     }
                 }
             } else if (value instanceof JSONObject) {
-                count += countKeysRecursive((JSONObject) value);
+                count += countKeysRecursive((JSONObject) value); // Recurse into nested objects
             }
         }
         return count;

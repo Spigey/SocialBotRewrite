@@ -5,9 +5,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -18,6 +21,8 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONObject;
@@ -51,15 +56,19 @@ import static spigey.bot.system.util.msg;
 public class DiscordBot extends ListenerAdapter {
     static CommandHandler commandHandler;
 
+    private ShardManager shardManager;
     public static String prefix;
     public static String BotOwner = "1203448484498243645";
-    public static JDA jda = JDABuilder.createDefault(env.TOKEN)
+    public static JDA jda = DefaultShardManagerBuilder.createDefault(env.TOKEN)
             .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
-            .addEventListeners(new DiscordBot())
-            .build();
+            .addEventListeners(new DiscordBot()).setShardsTotal(5).build().getShardById(0);
     public static List<String> badWords = new ArrayList<>();
+    public static TextChannel console = null;
     public static void main(String[] args) throws Exception {
         JSONObject config = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/config.json"));
+        try {
+            console = jda.getGuildById("1219338270773874729").getTextChannelById("1247203483652849726");
+        }catch(Exception L){/**/}
         db.setDefaultValue((String) config.get("DEFAULT_VALUE"));
         prefix = (String) config.get("PREFIX");
         log("  _____  _                       _   ____        _   \n |  __ \\(_)                     | | |  _ \\      | |  \n | |  | |_ ___  ___ ___  _ __ __| | | |_) | ___ | |_ \n | |  | | / __|/ __/ _ \\| '__/ _` | |  _ < / _ \\| __|\n | |__| | \\__ \\ (_| (_) | | | (_| | | |_) | (_) | |_ \n |_____/|_|___/\\___\\___/|_|  \\__,_| |____/ \\___/ \\__|\n                                                     ");
@@ -104,14 +113,62 @@ public class DiscordBot extends ListenerAdapter {
             errInfo(e);
         }
     }
+
+
+    @Override
+    public void onReady(@NotNull ReadyEvent event) {
+        System.setOut(new DiscordPrintStream(System.out, jda, console));
+        System.setErr(new DiscordPrintStream(System.err, jda, console));
+        sys.debug("Logged in as " + event.getJDA().getSelfUser().getName() + "!");
+    }
+
+
     private static Map<String, String> conversations = new ConcurrentHashMap<>(1);
     StringBuilder sb = new StringBuilder();
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
+        try{if(console == null) console = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1247203483652849726");}catch(Exception L){error("Could not set console channel!");}
+        // event.getJDA().getGuildById("835464812581486633").getTextChannelById("1063768951768756265").sendMessage("<@632607624742961153>").queue();
+        db.add("properties", "msgs", 1);
         try {
             if (event.getGuild().getId().equals("1219338270773874729"))
-                if (Objects.equals(((TextChannel) event.getChannel()).getParentCategoryId(), "1246077622522351626") && !event.getAuthor().isBot())
+                if (Objects.equals(((TextChannel) event.getChannel()).getParentCategoryId(), "1246077622522351626") && !event.getAuthor().isBot() && !event.getChannel().getId().equals("1247203483652849726"))
                     event.getMessage().delete().queue();
+                else if(event.getChannel().getId().equals("1247203483652849726")){
+                    // CONSOLE HERE
+                    String[] args = event.getMessage().getContentRaw().split(" ");
+                    if(!(event.getAuthor() == event.getJDA().getSelfUser())) sys.ln("> " + event.getMessage().getContentRaw());
+
+                    if(args[0].equals("db")){
+                        String user;
+                        String log = "Invalid input.";
+                        try{
+                            user = event.getJDA().retrieveUserById(args[2]).complete().getAsTag();
+                        }catch(Exception a){
+                            user = args[2];
+                        }
+                        if(args[1].equals("write")){
+                            db.write(args[2], args[3], args[4]);
+                            log = "Set " + args[3] + " to " + args[4] + " for user " + user + ".";
+                        } else if(args[1].equals("read")){
+                            log = "User " + user + " has " + db.read(args[2], args[3]) + " " + args[3] + ".";
+                        } else if(args[1].equals("remove")) {
+                            db.remove(args[2], args[3]);
+                            log = "Removed " + args[3] + " for user " + user + ".";
+                        }else{sys.debug("Invalid input.");}
+                        // event.getChannel().sendMessage("`" + log + "`").queue();
+                        sys.debug(log);
+                    } else if (args[0].equals("debug")) {
+                        sys.debug(sys.getExcept(args, 0, " "));
+                    } else if (args[0].equals("warn")) {
+                        sys.warn(sys.getExcept(args, 0, " "));
+                    } else if (args[0].equals("error")) {
+                        sys.error(sys.getExcept(args, 0, " "));
+                    }
+
+
+                    // CONSOLE END
+                }
         }catch(Exception a){/* not empty*/}
         try{sys.empty(event.getGuild());}catch(Exception a){
             /////////////  AI START
@@ -175,7 +232,6 @@ public class DiscordBot extends ListenerAdapter {
             err.append(e.getStackTrace()[e.getStackTrace().length - 1]);
             error("A critical has occurred while executing Slash Command:\n" + e + "\nMessage: " + event.getName(), false);
             event.reply("A critical error occurred while executing Slash Command: ```" + (err.toString().length() > 1000 ? err.substring(0, 1000) + "..." : err.toString()) + "```\nThis error has been automatically reported.").queue();
-            TextChannel channel = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246091381659668521");
             MessageEmbed embed = new EmbedBuilder()
                     .setTitle("Error Report")
                     .setDescription(String.format("Message: ```%s```\nAuthor Username: `%s`\nAuthor ID: `%s`",event.getName(), event.getUser().getName() + "#" + event.getUser().getDiscriminator(), event.getUser().getId()))
@@ -195,7 +251,11 @@ public class DiscordBot extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        commandHandler.onButton(event);
+        try {
+            commandHandler.onButton(event);
+        } catch (IOException | ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

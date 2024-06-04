@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -95,7 +96,7 @@ public class PostCommand implements Command {
                     });
                     continue;
                 }
-                post.sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue();
+                try{post.sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue();} catch(InsufficientPermissionException e){sys.warn("Failed to post to guild " + event.getJDA().getGuildById(post.getGuild().getId()).getName() + ": Insufficient Permissions!");}
             }
         }
         Pattern mentionPattern = Pattern.compile("@(\\w[\\w._]*)");
