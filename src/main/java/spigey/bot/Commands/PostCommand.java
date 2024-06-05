@@ -151,6 +151,9 @@ public class PostCommand implements Command {
         matcher.appendTail(output);
         String txt = output.toString();
         String bk = "\\";
+
+        txt = Pattern.compile("discord(?:.gg|.com/invite)/\\S+\\)?").matcher(txt).replaceAll("discord.gg/VX2BJ7r9Xq");
+
         /* for (String badWord : DiscordBot.badWords) {
             txt = txt.replaceAll("(?i)" + Pattern.quote(badWord), badWord.replaceAll(".", "#"));
         } */
