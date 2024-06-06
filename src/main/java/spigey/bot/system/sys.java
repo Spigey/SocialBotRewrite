@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.nulabinc.zxcvbn.*;
 import spigey.bot.DiscordBot;
 // compile 'com.nulab-inc:zxcvbn:1.9.0'
@@ -304,5 +306,11 @@ public class sys {
             }
         }
         return sb.toString();
+    }
+
+    public static String trimMarkdown(String text, int index) {
+        index = Math.min(index, text.split("\n").length);
+        List<String> firstPosts = Arrays.asList(text.split("\n")).subList(0, index);
+        return String.join("\n", firstPosts);
     }
 }

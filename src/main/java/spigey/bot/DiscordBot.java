@@ -69,8 +69,16 @@ public class DiscordBot extends ListenerAdapter {
             .addEventListeners(new DiscordBot()).build();
     public static List<String> badWords = new ArrayList<>();
     public static TextChannel console = null;
+    public static JSONObject config;
+
+    static {
+        try {
+            config = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/config.json"));
+        } catch (Exception e) {/**/}
+    }
+
     public static void main(String[] args) throws Exception {
-        JSONObject config = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/config.json"));
+        // JDABuilder.createDefault(env.DEV_TOKEN).enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS).addEventListeners(new DiscordBot()).build();
         try {
             console = jda.getGuildById("1219338270773874729").getTextChannelById("1247203483652849726");
         }catch(Exception L){/**/}
@@ -115,7 +123,9 @@ public class DiscordBot extends ListenerAdapter {
                                 new SubcommandData("remove", "Remove a friend.")
                                         .addOption(OptionType.STRING, "username", "Username of the friend to remove.", true),
                                 new SubcommandData("list", "View your friends.")
-                        )
+                        ),
+                Commands.slash("setstatus", "Set a status that will be displayed in your profile.")
+                        .addOption(OptionType.STRING, "status", "Status. Leave this empty to remove your status.")
         ).queue();
         try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/spigey/bot/system/badwords.txt"))) {
             String line;
@@ -186,6 +196,8 @@ public class DiscordBot extends ListenerAdapter {
                         sys.warn(getExcept(args, 0, " "));
                     } else if (args[0].equals("error")) {
                         sys.error(getExcept(args, 0, " "));
+                    } else if(args[0].equals("now")){
+                        event.getChannel().sendMessage("<t:" + event.getMessage().getTimeCreated().toEpochSecond() + ":R>").queue();
                     }
 
 

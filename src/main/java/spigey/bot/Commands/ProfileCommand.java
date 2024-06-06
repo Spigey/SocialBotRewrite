@@ -27,7 +27,7 @@ public class ProfileCommand implements Command {
         final Button follow = Button.secondary("follow_" + user, "Follow").withEmoji(Emoji.fromUnicode("\ud83d\udc65"));
         MessageEmbed embed = new EmbedBuilder()
                 .setTitle(String.format("%s's Profile", user))
-                .setDescription(String.format("**Following:** %s\n**Followers:** %s\n**Posts:**%s", sys.occur(db.read(user, "following"), ", "), sys.occur(db.read(user, "followers"), ", "), db.read(user, "posts", "\nThis user has not posted yet."))).build();
+                .setDescription(String.format("**Following:** %s\n**Followers:** %s\n**Status:** %s\n**Last Online:** <t:%s:R>\n**Posts:**%s", sys.occur(db.read(user, "following"), ", "), sys.occur(db.read(user, "followers"), ", "), db.read(user, "status", "/"), db.read(user, "last_online"), db.read(user, "posts", "\nThis user has not posted yet."))).build();
         event.reply("").addEmbeds(embed).addActionRow(follow).queue();
         return 1;
     }

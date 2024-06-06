@@ -4,6 +4,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import spigey.bot.DiscordBot;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -18,7 +19,7 @@ import static spigey.bot.system.util.log;
 
 public class db {
     private static String defaultValue = "temp";
-    private static final String FILE_PATH = "src/main/java/spigey/bot/system/database/database.json";
+    public static final String FILE_PATH = Objects.equals(DiscordBot.config.get("DATABASE").toString(), "MAIN") ? DiscordBot.config.get("DATABASE_MAIN").toString() : DiscordBot.config.get("DATABASE_TEST").toString();
 
     public static void write(String user, String key, String value) throws IOException, ParseException {
         JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));

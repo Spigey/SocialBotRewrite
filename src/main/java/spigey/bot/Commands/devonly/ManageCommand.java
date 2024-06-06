@@ -95,7 +95,7 @@ public class ManageCommand implements Command {
                 if(args.length > 2 && args[2].equalsIgnoreCase("-v")) decryptedPassword.set(sys.encrypt(decryptedPassword.get(), env.ENCRYPTION_KEY));
                 embed = new EmbedBuilder()
                         .setTitle("Account management Panel")
-                        .setDescription(String.format("**Username**: `%s` %s\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Origin**: `%s`\n**Users**: `%s`", username, db.read(username, "verified", ""), finalUser, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword.get()), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), db.read(user, "origin", "???"), usersString))
+                        .setDescription(String.format("**Username**: `%s` %s\n**User**: `%s`\n**Status**: `%s`\n**Last Online**: <t:%s:R>\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Origin**: `%s`\n**Users**: `%s`", username, db.read(username, "verified", ""), db.read(username, "status", "///"), db.read(username, "last_online"), finalUser, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword.get()), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), db.read(user, "origin", "???"), usersString))
                         .setColor(EmbedColor.RED);
             } catch (Exception e) {errInfo(e);}
             event.getMessage().reply(user).addEmbeds(embed.build()).addActionRow(

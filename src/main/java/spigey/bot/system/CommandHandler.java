@@ -136,7 +136,7 @@ public class CommandHandler {
                     return;
                 }
                 boolean success = false;
-                if(Objects.equals(db.read(event.getUser().getId(), "banned"), "0")){success = command.slashCommand(event) == 1;}else{
+                if(Objects.equals(db.read(event.getUser().getId(), "banned"), "0")){success = command.slashCommand(event) == 1; if(!Objects.equals(db.read(event.getUser().getId(), "account"), "0")){db.write(db.read(event.getUser().getId(), "account"), "last_online", String.valueOf(event.getInteraction().getTimeCreated().toEpochSecond()));}}else{
                     StringBuilder cmd = new StringBuilder("/" + event.getName() + " ");
                     List<OptionMapping> options = event.getOptions();
                     for (OptionMapping option : options) {
