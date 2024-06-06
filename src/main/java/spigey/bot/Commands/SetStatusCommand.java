@@ -24,8 +24,9 @@ public class SetStatusCommand implements Command {
             event.reply("You have successfully reset your status!").queue();
             return 1;
         }
-        if(event.getOption("status").getAsString().length() > 100){event.reply("Your status must at most be 100 characters in length.").setEphemeral(true).queue();}
+        if(event.getOption("status").getAsString().length() > 100){event.reply("Your status must be at most 100 characters in length.").setEphemeral(true).queue();}
         db.write(username, "status", event.getOption("status").getAsString());
+        event.reply("You have successfully successfully updated your status!").queue();
         return 1;
     }
 }
