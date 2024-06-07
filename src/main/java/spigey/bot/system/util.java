@@ -139,6 +139,10 @@ public class util {
         return found;
     }
 
+    public static boolean userExists(String username){
+        return !Objects.equals(db.read(username, "password", ""), "");
+    }
+
     public static void notif(String username, MessageEmbed embed, Button... buttons) throws Exception {
         JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
         for (Object userId : existingData.keySet()) {

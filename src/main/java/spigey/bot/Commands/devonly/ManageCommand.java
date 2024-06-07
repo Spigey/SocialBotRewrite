@@ -7,12 +7,12 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import spigey.bot.system.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static spigey.bot.DiscordBot.prefix;
-import static spigey.bot.system.sys.errInfo;
-import static spigey.bot.system.sys.error;
+import static spigey.bot.system.sys.*;
 
 @CommandInfo(
         aliases = {"manage", "clear", "users", "chdel", "snipe", "encrypt", "decrypt", "rules"}
@@ -92,10 +92,45 @@ public class ManageCommand implements Command {
             EmbedBuilder embed = null;
             try {
                 try{usersString = new StringBuilder(usersString.substring(0, usersString.length() - 2));}catch(Exception L){error("Failed to retrieve users for ID " + user);}
-                if(args.length > 2 && args[2].equalsIgnoreCase("-v")) decryptedPassword.set(sys.encrypt(decryptedPassword.get(), env.ENCRYPTION_KEY));
+                if(flag(args, "-v")) decryptedPassword.set(sys.encrypt(decryptedPassword.get(), env.ENCRYPTION_KEY));
+                String followers = String.valueOf(occur(db.read(username, "followers", "???"), ", "));
+                String following = String.valueOf(occur(db.read(username, "following", "???"), ", "));
+                if(flag(args, "-c")){
+                    String[] followerusers = db.read(username, "followers", "").split(", ");
+                    String userString = db.read(username, "followers", "");
+                    for(String thisuser : followerusers){
+                        if(!util.userExists(thisuser)){
+                            userString = userString.replace(thisuser + ", ", ", ");
+                        }
+                    }
+                    followers += " -> " + userString.replaceAll(" , ", " ").split(", ").length;
+                    db.write(username, "followers", userString.replaceAll(" , ", " "));
+                    userString = db.read(username, "following", "");
+                    followerusers = db.read(username, "following", "").split(", ");
+                    for(String thisuser : followerusers){
+                        if(!util.userExists(thisuser)){
+                            userString = userString.replace(thisuser + ", ", ", ");
+                        }
+                    }
+                    db.write(username, "following", userString.replaceAll(" , ", " "));
+                    following += " -> " + userString.replaceAll(" , ", " ").split(", ").length;
+                }
                 embed = new EmbedBuilder()
                         .setTitle("Account management Panel")
-                        .setDescription(String.format("**Username**: `%s` %s%s\n**User**: `%s`\n**Status**: `%s`\n**Last Online**: <t:%s:R>\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`\n**Origin**: `%s`\n**Users**: `%s`", username, db.read(username, "verified", ""), db.read(args[1].replaceAll("--self", event.getAuthor().getId()), "banned", "").replace("true", EmojiDB.Banned), finalUser, db.read(username, "status", "///"), db.read(username, "last_online"), sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(sys.decrypt(decryptedPassword.get(), env.ENCRYPTION_KEY)), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), db.read(user, "origin", "???"), usersString))
+                        .setDescription(String.format("""
+                                **Username**: `%s` %s%s
+                                **User**: `%s`
+                                **Status**: `%s`
+                                **Last Online**: <t:%s:R>
+                                **Password**: `%s`
+                                **Decrypted Password**: ||`%s`||
+                                **Password Strength**: `%s%%`
+                                **Token length**: `%s`
+                                **Followers**: (%s) `%s`
+                                **Following**: (%s) `%s`
+                                **Origin**: `%s`
+                                **Users**: `%s`
+                                **Posts**: %s""", username, db.read(username, "verified", ""), db.read(username, "banned", "").replace("true", EmojiDB.Banned), finalUser, db.read(username, "status", "///"), db.read(username, "last_online"), sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(sys.decrypt(decryptedPassword.get(), env.ENCRYPTION_KEY)), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), followers, db.read(username, "followers", "???"), following, db.read(username, "following", "???"), db.read(username, "origin", "???"), usersString, db.read(username, "posts", "`???`")))
                         .setColor(EmbedColor.RED);
             } catch (Exception e) {errInfo(e);}
             event.getMessage().reply(user).addEmbeds(embed.build()).addActionRow(
@@ -105,5 +140,12 @@ public class ManageCommand implements Command {
                     Button.secondary("logout", "Log Out")
             ).queue();
         });
+    }
+    private boolean flag(String[] content, String flag) {
+        for(String arg : content){
+            if(Objects.equals(arg, content[0])) continue;
+            if(arg.equals(flag)) return true;
+        }
+        return false;
     }
 }
