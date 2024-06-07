@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -180,8 +181,8 @@ public class sys {
         return str;
     }
 
-    public static String generateToken(String username, String password, int length) throws NoSuchAlgorithmException {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._%$#@;:,&=+!";
+    public static String generateToken(String username, String password) throws NoSuchAlgorithmException {
+        /* String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._%$#@;:,&=+!";
         StringBuilder sb = new StringBuilder();
         String seed = String.format(env.TOKEN_SEED, username, password, generateKey(env.ENCRYPTION_KEY));
         Random random = new Random(seed.hashCode());
@@ -189,7 +190,8 @@ public class sys {
             int index = random.nextInt(chars.length());
             sb.append(chars.charAt(index));
         }
-        return sb.toString();
+        return sb.toString(); */
+        return genDiscordToken(strToInt(username + password)); // I was too lazy
     }
 
     public static String passToStr(String password, String mask){
@@ -313,4 +315,24 @@ public class sys {
         List<String> firstPosts = Arrays.asList(text.split("\n")).subList(0, index);
         return String.join("\n", firstPosts);
     }
+
+    public static long strToInt(String input) {
+        long number = 0;
+        for (char c : input.toCharArray()) number = 31 * number + c;
+        return number;
+    }
+
+    public static String genDiscordToken(long seed) {
+        final String CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_";
+        Random random = new Random(CHARS.hashCode());
+        random.setSeed(seed);
+        StringBuilder token = new StringBuilder(String.valueOf((char) (random.nextInt(26) + 'A')));
+        for (int i = 0; i < 23; i++) token.append(CHARS.charAt(random.nextInt(CHARS.length())));
+        token.append(".").append((char) (random.nextInt(26) + 'A'));
+        for (int i = 0; i < 5; i++) token.append(CHARS.charAt(random.nextInt(CHARS.length())));
+        token.append(".");
+        for (int i = 0; i < 27; i++) token.append(CHARS.charAt(random.nextInt(CHARS.length())));
+        return token.toString();
+    }
+
 }

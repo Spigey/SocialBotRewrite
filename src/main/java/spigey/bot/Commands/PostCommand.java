@@ -18,6 +18,7 @@ import org.json.simple.parser.ParseException;
 import spigey.bot.DiscordBot;
 import spigey.bot.system.*;
 
+import javax.management.loading.MLet;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -104,11 +105,12 @@ public class PostCommand implements Command {
         Set<String> mentionedUsernames = new HashSet<>();
         while (matcher.find()) mentionedUsernames.add(matcher.group(1));
         for (String mentionedUsername : mentionedUsernames) {
-            EmbedBuilder pingEmbed = new EmbedBuilder()
+            /* EmbedBuilder pingEmbed = new EmbedBuilder()
                     .setTitle("New Mention!")
                     .setDescription("**You were mentioned in a post by " + username + ":**\n" + txt(event.getOption("content").getAsString()))
                     .setColor(EmbedColor.GOLD);
-            util.notif(mentionedUsername, pingEmbed.build());
+            util.notif(mentionedUsername, pingEmbed.build()); */
+            db.write(mentionedUsername, "notifications", "mention-" + username + "," + db.read(username, "notifications"));
         }
         EmbedBuilder followEmbed = new EmbedBuilder()
                 .setTitle(String.format("@%s has posted!", username))
@@ -129,9 +131,7 @@ public class PostCommand implements Command {
             url.set(message.getJumpUrl());
             try {
                 db.write(username, "posts", sys.trimMarkdown("\n[" + sys.trim(event.getOption("content").getAsString(),10) +"](" + url.get() + ")" + db.read(username, "posts", ""), 10));
-            } catch (IOException | ParseException e) {
-                throw new RuntimeException(e);
-            }
+            } catch (Exception e) {/**/}
         });
         if(!Objects.equals(db.read(username, "verified"), "0")) return 0;
         return 1;

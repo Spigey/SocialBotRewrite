@@ -26,8 +26,8 @@ public class ProfileCommand implements Command {
         try{if(!Objects.equals(db.read(event.getOption("username").getAsString(), "password", "0"), "0")) user = event.getOption("username").getAsString();}catch(Exception e){/**/}
         final Button follow = Button.secondary("follow_" + user, "Follow").withEmoji(Emoji.fromUnicode("\ud83d\udc65"));
         MessageEmbed embed = new EmbedBuilder()
-                .setTitle(String.format("%s's Profile", user))
-                .setDescription(String.format("**Following:** %s\n**Followers:** %s\n**Status:** %s\n**Last Online:** <t:%s:R>\n**Posts:**%s", sys.occur(db.read(user, "following"), ", "), sys.occur(db.read(user, "followers"), ", "), db.read(user, "status", "/"), db.read(user, "last_online"), db.read(user, "posts", "\nThis user has not posted yet."))).build();
+                .setTitle("Profile")
+                .setDescription(String.format("**Name:** %s %s\n**Following:** %s\n**Followers:** %s\n**Status:** %s\n**Posts:**%s\n**Friends:** %s\n**Last Online:** <t:%s:R> (<t:%s>)", user, db.read(user, "verified", ""), sys.occur(db.read(user, "following"), ", "), sys.occur(db.read(user, "followers"), ", "), db.read(user, "status", "/"), db.read(user, "posts", "\nThis user has not posted yet."), db.read(user, "friends", "No friends yet :("), db.read(user, "last_online"), db.read(user, "last_online"))).build();
         event.reply("").addEmbeds(embed).addActionRow(follow).queue();
         return 1;
     }

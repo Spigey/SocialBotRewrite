@@ -23,6 +23,7 @@ public class FollowButton implements Command {
         if(followedUser.equals(user)){event.reply("You cannot follow yourself!").setEphemeral(true).queue(); return;}
         if(following.contains(followedUser + ", ")){
             event.reply("You are no longer following " + followedUser + ".").setEphemeral(true).queue();
+            db.write(followedUser, "notifications", db.read(followedUser, "notifications").replace(",follow-" + user, ""));
             db.write(user, "following", following.replace(followedUser + ", ", ""));
             db.write(followedUser, "followers", followers.replace(user + ", ", ""));
             if(Objects.equals(db.read(user, "following"), "0")) db.remove(user, "following");
@@ -31,6 +32,7 @@ public class FollowButton implements Command {
         }
         db.write(user, "following", following + followedUser + ", ");
         db.write(followedUser, "followers", followers + user + ", ");
+        db.write(followedUser, "notifications", "follow-" + user + "," + db.read(followedUser, "notifications").replace(",follow-" + user, ""));
         event.reply("You are now following "  + followedUser + ".").setEphemeral(true).queue();
     }
 }

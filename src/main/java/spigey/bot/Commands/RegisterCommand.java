@@ -27,7 +27,7 @@ public class RegisterCommand implements Command {
         if(password.length() < 6 || password.length() > 40){event.reply("Invalid password. Must be between 6 and 24 characters in length").setEphemeral(true).queue(); return 0;}
         db.write(user, "account", username);
         db.write(username, "password", sys.encrypt(password, env.ENCRYPTION_KEY));
-        db.write(user, "token", sys.encrypt(sys.generateToken(username, password, String.format("%s%s-------------------", username, password).length() * 2), env.ENCRYPTION_KEY));
+        db.write(user, "token", sys.encrypt(sys.generateToken(username, password), env.ENCRYPTION_KEY));
         db.write(user, "origin", username);
         event.reply("You have successfully registered as `" + username + "`!").setEphemeral(true).queue();
         EmbedBuilder embed = new EmbedBuilder()

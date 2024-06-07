@@ -19,6 +19,7 @@ public class VerifyButtonCommand implements Command {
             db.write(username, "verified", EmojiDB.Verified);
             event.reply("Successfully verified " + username + "!").setEphemeral(true).queue();
             event.editButton(event.getButton().withStyle(ButtonStyle.DANGER).withLabel("Un-Verify")).queue();
+            db.write(username, "notifications", "verified" + db.read(username, "notifications"));
             MessageEmbed punishLog = new EmbedBuilder()
                     .setTitle(":white_check_mark: Verified")
                     .setDescription(String.format("%s (%s / %s) has been verified by %s!", username, user, event.getJDA().retrieveUserById(user).complete().getAsTag(), event.getUser().getName()))

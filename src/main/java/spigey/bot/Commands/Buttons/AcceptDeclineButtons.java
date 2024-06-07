@@ -22,11 +22,7 @@ public class AcceptDeclineButtons implements Command {
         if(event.getButton().getId().startsWith("accept")){
             db.write(self, "friends", String.format("%s, %s", db.read(self, "friends", ""), username));
             db.write(username, "friends", String.format("%s, %s", db.read(username, "friends", ""), self));
-            EmbedBuilder embed = new EmbedBuilder()
-                    .setTitle("Friend request accepted")
-                    .setDescription(self + " has accepted your friend request!")
-                    .setColor(EmbedColor.GREEN);
-            util.notif(username, embed.build());
+            db.write(username, "notifications", "accept-" + self + "," + db.read(username, "notifications"));
             event.reply("You have accepted the friend request from " + username + "!").setEphemeral(true).queue();
             event.getMessage().editMessageComponents(Collections.emptyList()).queue();
         }else {

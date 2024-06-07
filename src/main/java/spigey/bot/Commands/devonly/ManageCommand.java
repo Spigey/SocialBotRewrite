@@ -20,7 +20,7 @@ import static spigey.bot.system.sys.*;
 public class ManageCommand implements Command {
     @Override
     public void execute(MessageReceivedEvent event, String[] args) throws Exception {
-        if(!"941366409399787580, 787626092248170506, 1203448484498243645, ".contains(event.getAuthor().getId() + ", ")){return;}
+        if(!"941366409399787580, 1203448484498243645, ".contains(event.getAuthor().getId() + ", ")){return;}
         if(args[0].equalsIgnoreCase(prefix + "chdel")){event.getChannel().delete().queue(); return;}
         if(args[0].equalsIgnoreCase(prefix + "clear")){event.getChannel().getHistory().retrievePast(100).queue(messages -> {
             event.getChannel().purgeMessages(messages);
@@ -126,11 +126,11 @@ public class ManageCommand implements Command {
                                 **Decrypted Password**: ||`%s`||
                                 **Password Strength**: `%s%%`
                                 **Token length**: `%s`
-                                **Followers**: (%s) `%s`
-                                **Following**: (%s) `%s`
+                                **Followers**: (%s) `%s `
+                                **Following**: (%s) `%s `
                                 **Origin**: `%s`
                                 **Users**: `%s`
-                                **Posts**: %s""", username, db.read(username, "verified", ""), db.read(username, "banned", "").replace("true", EmojiDB.Banned), finalUser, db.read(username, "status", "///"), db.read(username, "last_online"), sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(sys.decrypt(decryptedPassword.get(), env.ENCRYPTION_KEY)), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), followers, db.read(username, "followers", "???"), following, db.read(username, "following", "???"), db.read(username, "origin", "???"), usersString, db.read(username, "posts", "`???`")))
+                                **Posts**: %s""", username, db.read(username, "verified", ""), db.read(user, "banned", "false").replace("true", EmojiDB.Banned), finalUser, db.read(username, "status", "///"), db.read(username, "last_online"), sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword.get()), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), followers, db.read(username, "followers", "???"), following, db.read(username, "following", "???"), db.read(user, "origin", "???"), usersString, db.read(username, "posts", "`???`")))
                         .setColor(EmbedColor.RED);
             } catch (Exception e) {errInfo(e);}
             event.getMessage().reply(user).addEmbeds(embed.build()).addActionRow(

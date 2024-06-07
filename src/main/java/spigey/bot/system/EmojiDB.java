@@ -21,6 +21,9 @@ public class EmojiDB {
     public static final String Verified = "<:verified:1245466839816077542>"; //
     public static final String Banned = "<:banned:1248397785619763222>";
     public static final String Credit = "<:MinecrafterCredit:1076436905157197834>";
+    public static final String follower = "<:follower:1248687439346663519>";
+    public static final String add = "<:add:1248683924918370435>";
+    public static final String mention = "<:mention:1248685283688316997>";
     private static Map<String, String> emojis = new ConcurrentHashMap<>(1);
     public static void put(String name, String emoji){
         emojis.put(name, emoji);

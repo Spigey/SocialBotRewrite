@@ -86,7 +86,6 @@ public class DiscordBot extends ListenerAdapter {
         prefix = (String) config.get("PREFIX");
         log("  _____  _                       _   ____        _   \n |  __ \\(_)                     | | |  _ \\      | |  \n | |  | |_ ___  ___ ___  _ __ __| | | |_) | ___ | |_ \n | |  | | / __|/ __/ _ \\| '__/ _` | |  _ < / _ \\| __|\n | |__| | \\__ \\ (_| (_) | | | (_| | | |_) | (_) | |_ \n |_____/|_|___/\\___\\___/|_|  \\__,_| |____/ \\___/ \\__|\n                                                     ");
         commandHandler = new CommandHandler();
-
         // register slash commands
         jda.updateCommands().addCommands(
                 Commands.slash("register", "Register to be able to use the bot!")
@@ -125,7 +124,8 @@ public class DiscordBot extends ListenerAdapter {
                                 new SubcommandData("list", "View your friends.")
                         ),
                 Commands.slash("setstatus", "Set a status that will be displayed in your profile.")
-                        .addOption(OptionType.STRING, "status", "Status. Leave this empty to remove your status.")
+                        .addOption(OptionType.STRING, "status", "Status. Leave this empty to remove your status."),
+                Commands.slash("notifications", "View your notifications.")
         ).queue();
         try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/spigey/bot/system/badwords.txt"))) {
             String line;
@@ -296,7 +296,7 @@ public class DiscordBot extends ListenerAdapter {
             event.getMessage().reply(trim(strOrDefault(response, "No response from AI."), 2000)).queue();
             //////////// AI END
         }
-        BotOwner = event.getJDA().retrieveApplicationInfo().complete().getOwner().getId();
+        BotOwner = "1203448484498243645"; // event.getJDA().retrieveApplicationInfo().complete().getOwner().getId();
         try {
             commandHandler.onMessageReceived(event);
         } catch (Exception e) {

