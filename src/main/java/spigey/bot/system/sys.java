@@ -3,6 +3,9 @@ package spigey.bot.system;
 import javax.annotation.Nullable;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,6 +25,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.spec.KeySpec;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -137,41 +141,42 @@ public class sys {
         }catch (Exception L){/**/}
     }
 
-    public static String encrypt(String text, String encryptionKey) throws Exception {
-        SecretKey secretKey = generateKey(encryptionKey);
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-        byte[] encryptedBytes = cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(encryptedBytes);
+    private static SecretKeySpec generateKey(String encryptionKey) throws Exception {
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+        KeySpec spec = new PBEKeySpec(encryptionKey.toCharArray(), encryptionKey.getBytes(), 65536, 256);
+        return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
     }
 
-    public static String trim(String str, int length) {
-        return str.length() > length ? str.substring(0, length - 4) + "..." : str;
+    public static String encrypt(String plaintext, String encryptionKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        byte[] iv = new byte[12];
+        new SecureRandom().nextBytes(iv);
+        cipher.init(Cipher.ENCRYPT_MODE, generateKey(encryptionKey), new GCMParameterSpec(128, iv));
+        byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(iv) + ":" + Base64.getEncoder().encodeToString(ciphertext); // Combine IV and ciphertext
     }
 
-    public static String mirt(String str, int length) {
-        return str.length() > length ? "..." + str.substring(str.length() - length, str.length() - 1): str;
-    }
 
-    public static String decrypt(String encryptedText, String encryptionKey) throws Exception {
+    public static String decrypt(String ciphertext, String encryptionKey) throws Exception {
         try {
-            SecretKey secretKey = generateKey(encryptionKey);
-            Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.DECRYPT_MODE, secretKey);
-            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
-            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-            return new String(decryptedBytes, StandardCharsets.UTF_8);
-        } catch(Exception L){
-            error(L.getMessage());
-            return encryptedText;
+            String[] parts = ciphertext.split(":"); // Split at the delimiter
+            byte[] iv = Base64.getDecoder().decode(parts[0]);
+            byte[] ct = Base64.getDecoder().decode(parts[1]);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(2, generateKey(encryptionKey), new GCMParameterSpec(128, iv));
+            return new String(cipher.doFinal(ct));
+        } catch (Exception e) {
+            error(e.getMessage());
+            return ciphertext;
         }
     }
 
-    private static SecretKey generateKey(String encryptionKey) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] keyBytes = encryptionKey.getBytes(StandardCharsets.UTF_8);
-        byte[] hashedBytes = digest.digest(keyBytes);
-        return new SecretKeySpec(hashedBytes, "AES");
+    public static String trim(String s, int l) {
+        return s.length() > l ? s.substring(0, l - 4) + "..." : s;
+    }
+
+    public static String mirt(String s, int l) {
+        return s.length() > l ? "..." + s.substring(s.length() - l, s.length() - 1) : s;
     }
 
     public static String strOrDefault(@Nullable String str, String def){
