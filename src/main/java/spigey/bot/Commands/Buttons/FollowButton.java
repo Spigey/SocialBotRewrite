@@ -32,7 +32,7 @@ public class FollowButton implements Command {
         }
         db.write(user, "following", following + followedUser + ", ");
         db.write(followedUser, "followers", followers + user + ", ");
-        db.write(followedUser, "notifications", "follow-" + user + "," + db.read(followedUser, "notifications").replace(",follow-" + user, ""));
+        db.write(followedUser, "notifications", "follow-" + user + "," + db.read(followedUser, "notifications").replace("follow-" + user + ",", ""));
         event.reply("You are now following "  + followedUser + ".").setEphemeral(true).queue();
     }
 }

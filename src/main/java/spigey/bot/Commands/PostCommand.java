@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -31,7 +32,10 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import static spigey.bot.DiscordBot.badWords;
+import static spigey.bot.DiscordBot.jda;
 import static spigey.bot.system.sys.errInfo;
 
 @CommandInfo(
@@ -129,7 +133,14 @@ public class PostCommand implements Command {
         event.getJDA().getGuildById("1246040271435730975").getTextChannelById("1246040631801810986").sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue(message -> {
             url.set(message.getJumpUrl());
             try {
-                db.write(username, "posts", sys.trimMarkdown("\n[" + sys.trim(event.getOption("content").getAsString(),10) +"](" + url.get() + ")" + db.read(username, "posts", ""), 10));
+                StringBuffer sb = new StringBuffer();
+                Matcher dkjdfh = Pattern.compile("<@!?(\\d+)>").matcher(event.getOption("content").getAsString());
+                while(dkjdfh.find()){
+                    try{dkjdfh.appendReplacement(sb, "@" + jda.retrieveUserById(dkjdfh.group(1)).complete().getName());}
+                    catch(ErrorResponseException L){dkjdfh.appendReplacement(sb, "@unkno...");}
+                }
+                dkjdfh.appendTail(sb);
+                db.write(username, "posts", sys.trimMarkdown("\n[" + sys.trim(sb.toString(),10) +"](" + url.get() + ")" + db.read(username, "posts", ""), 10));
             } catch (Exception e) {/**/}
         });
         if(!Objects.equals(db.read(username, "verified"), "0")) return 0;
@@ -138,9 +149,16 @@ public class PostCommand implements Command {
 
 
     private static String txt(String text) throws Exception {
+        StringBuffer sb = new StringBuffer();
+        Matcher dkjdfh = Pattern.compile("<@!?(\\d+)>").matcher(text);
+        while(dkjdfh.find()){
+            try{dkjdfh.appendReplacement(sb, "@" + jda.retrieveUserById(dkjdfh.group(1)).complete().getName());}
+            catch(ErrorResponseException L){dkjdfh.appendReplacement(sb, "@unknown-user");}
+        }
+        dkjdfh.appendTail(sb);
         Pattern mentionPattern = Pattern.compile("@(\\w[\\w._]*)");
         // Matcher matcher = mentionPattern.matcher(new Gson().fromJson(sys.sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?prompt=" + URLEncoder.encode("You're a Moderation AI. Your task is to keep posts PG13 by censoring bad words by replacing every single letter with `\\*`. Make sure to always double check that you have censored actual BAD words, and no good words. For example: `you are a retard` -> `you are a \\*\\*\\*\\*\\*\\*`, Do not censor \"fuck\" and \"shit\". If the prompt does not contain any bad words, just return the prompt again. You can ONLY reply in the censored prompt, the users prompt is: " + text + "`", StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString());
-        Matcher matcher = mentionPattern.matcher(text);
+        Matcher matcher = mentionPattern.matcher(sb.toString());
         StringBuffer output = new StringBuffer();
         while (matcher.find()) {
             String username = matcher.group(1); // Extract the username
@@ -156,6 +174,13 @@ public class PostCommand implements Command {
         /* for (String badWord : DiscordBot.badWords) {
             txt = txt.replaceAll("(?i)" + Pattern.quote(badWord), badWord.replaceAll(".", "#"));
         } */
+
+        txt = Arrays.stream(txt.split("\\s+"))
+                .map(word -> badWords.stream().anyMatch(bad -> word.toLowerCase().contains(bad))
+                        ? word.replaceAll(".", "\\\\*")
+                        : word)
+                .collect(Collectors.joining(" "));
+
         return txt.replaceAll("\\\\n", "\n");
     }
 }
