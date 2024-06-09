@@ -71,6 +71,14 @@ public class DiscordBot extends ListenerAdapter {
     public static TextChannel console = null;
     public static JSONObject config;
 
+    /*
+        package spigey.bot.system;
+
+        public class env {
+            public static final String TOKEN = "...";
+            public static final String ENCRYPTION_KEY = "...";
+        }
+    */
     static {
         try {
             config = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/config.json"));
