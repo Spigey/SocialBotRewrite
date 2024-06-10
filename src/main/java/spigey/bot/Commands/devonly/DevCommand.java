@@ -55,85 +55,95 @@ public class DevCommand implements Command {
     @Override
     public int slashCommand(SlashCommandInteractionEvent event) throws Exception {
         String[] args = event.getOption("command").getAsString().split(" ");
-        if(Objects.equals(args[0], "ban")){
-            String user = args[1];
-            String username = db.read(user, "account");
-            db.remove(user, "token");
-            db.remove(username);
-            db.remove(user, "account");
-            db.write(user,"banned", "true");
-            debug("Banned " + user + "! (" + username + ")");
-            event.reply("Banned " + user).queue();
-        }else if(Objects.equals(args[0], "unban")){
-            String user = args[1];
-            db.remove(user,"banned");
-            event.reply("Unbanned " + user).queue();
-        }else if(Objects.equals(args[0], "whitelist")){
-            Guild dev = event.getJDA().getGuildById(args[2]);
-            dev.updateCommands().addCommands(
-                    Commands.slash("dev", "Dev commands")
-                            .addOption(OptionType.STRING, "command", "Command to execute.", true)
-            ).queue();
-            event.reply("Whitelisted " + dev.getName()).queue();
-        }else if(Objects.equals(args[0], "role")){
-            if(event.getMember().getRoles().contains(event.getGuild().getRoleById("1246090098022547528"))){
-                event.getGuild().removeRoleFromMember(event.getMember(), event.getGuild().getRoleById("1246090098022547528")).queue();
-                event.reply("Removed Admin").queue();
-            } else{
-                event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("1246090098022547528")).queue();
-                event.reply("Received Admin").queue();
+        args[1] = args[1].replaceAll("--self", event.getUser().getId());
+        switch (args[0]) {
+            case "ban" -> {
+                String user = args[1];
+                String username = db.read(user, "account");
+                db.remove(user, "token");
+                db.remove(username);
+                db.remove(user, "account");
+                db.write(user, "banned", "true");
+                debug("Banned " + user + "! (" + username + ")");
+                event.reply("Banned " + user).queue();
             }
-        } else if(Objects.equals(args[0], "manage")){
-            String user = args[1].replaceAll("--self", event.getUser().getId());
-            // if(Objects.equals(db.read("passwords", "password_" + db.read(args[1], "account")), "0")){event.reply("User not found.").setEphemeral(true).queue(); return 0;}
-            String username = db.read(user, "account", "???");
-            String password = db.read(username, "password", "???");
-            String decryptedPassword = sys.decrypt(password,env.ENCRYPTION_KEY);
-            String User = "???";
-            try{
-                User = String.format("%s (%s)", event.getJDA().getUserById(user).getAsTag(), user);
-            }catch(Exception L){/**/}
-            EmbedBuilder embed = new EmbedBuilder()
-                    .setTitle("Account management Panel")
-                    .setDescription(String.format("**Username**: `%s`\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`", username, User, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword),sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length()))
-                    .setColor(EmbedColor.RED);
-            if(args.length > 2 && Objects.equals(args[2], "--ephemeral")){
-                event.reply(user).addEmbeds(embed.build()).addActionRow(
-                        Button.danger("snipe", "Snipe"),
-                        Button.danger("ban", "Ban"),
-                        Button.success("verify", "Verify"),
-                        Button.secondary("logout", "Log Out")
-                ).setEphemeral(true).queue();
-            } else{
-                event.reply(user).addEmbeds(embed.build()).addActionRow(
-                        Button.danger("snipe", "Snipe"),
-                        Button.danger("ban", "Ban"),
-                        Button.success("verify", "Verify"),
-                        Button.secondary("logout", "Log Out")
+            case "unban" -> {
+                String user = args[1];
+                db.remove(user, "banned");
+                event.reply("Unbanned " + user).queue();
+            }
+            case "whitelist" -> {
+                Guild dev = event.getJDA().getGuildById(args[2]);
+                dev.updateCommands().addCommands(
+                        Commands.slash("dev", "Dev commands")
+                                .addOption(OptionType.STRING, "command", "Command to execute.", true)
                 ).queue();
+                event.reply("Whitelisted " + dev.getName()).queue();
             }
-        } else if (Objects.equals(args[0], "purge")) {
-            event.getChannel().getHistory().retrievePast(Integer.parseInt(args[1])).queue(messages -> {
-                event.getChannel().purgeMessages(messages);
-            });
-            event.reply("Purging messages").setEphemeral(true).queue();
-        } else if(Objects.equals(args[0], "error")){
-            throw new Exception(args[1]);
-        } else if(Objects.equals(args[0], "db")){
-            if(Objects.equals(args[1], "write")){
-                db.write(args[2], args[3], args[4]);
-            } else if(Objects.equals(args[1], "read")){
-                if(args.length > 4 && args[4].equals("--code")){event.reply("```" + db.read(args[2], args[3]) + "```").setEphemeral(true).queue(); return 1;}
-                event.reply(db.read(args[2], args[3])).setEphemeral(true).queue();
-            } else if(Objects.equals(args[1], "remove")){
-                db.remove(args[2], args[3]);
+            case "role" -> {
+                if (event.getMember().getRoles().contains(event.getGuild().getRoleById("1246090098022547528"))) {
+                    event.getGuild().removeRoleFromMember(event.getMember(), event.getGuild().getRoleById("1246090098022547528")).queue();
+                    event.reply("Removed Admin").queue();
+                } else {
+                    event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("1246090098022547528")).queue();
+                    event.reply("Received Admin").queue();
+                }
             }
-        } else if(Objects.equals(args[0], "say")){
-            event.reply("erm, freddy fazbar!!!??!??").setEphemeral(true).queue();
-            event.getChannel().sendMessage(sys.getExcept(args, 0, " ")).queue();
-        }
-        else{
-            event.reply("Invalid command.").queue();
+            case "manage" -> {
+                String user = args[1].replaceAll("--self", event.getUser().getId());
+                // if(Objects.equals(db.read("passwords", "password_" + db.read(args[1], "account")), "0")){event.reply("User not found.").setEphemeral(true).queue(); return 0;}
+                String username = db.read(user, "account", "???");
+                String password = db.read(username, "password", "???");
+                String decryptedPassword = sys.decrypt(password, env.ENCRYPTION_KEY);
+                String User = "???";
+                try {
+                    User = String.format("%s (%s)", event.getJDA().getUserById(user).getAsTag(), user);
+                } catch (Exception L) {/**/}
+                EmbedBuilder embed = new EmbedBuilder()
+                        .setTitle("Account management Panel")
+                        .setDescription(String.format("**Username**: `%s`\n**User**: `%s`\n**Password**: `%s`\n**Decrypted Password**: ||`%s`||\n**Password Strength**: `%s%%`\n**Token length**: `%s`", username, User, sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length()))
+                        .setColor(EmbedColor.RED);
+                if (args.length > 2 && Objects.equals(args[2], "--ephemeral")) {
+                    event.reply(user).addEmbeds(embed.build()).addActionRow(
+                            Button.danger("snipe", "Snipe"),
+                            Button.danger("ban", "Ban"),
+                            Button.success("verify", "Verify"),
+                            Button.secondary("logout", "Log Out")
+                    ).setEphemeral(true).queue();
+                } else {
+                    event.reply(user).addEmbeds(embed.build()).addActionRow(
+                            Button.danger("snipe", "Snipe"),
+                            Button.danger("ban", "Ban"),
+                            Button.success("verify", "Verify"),
+                            Button.secondary("logout", "Log Out")
+                    ).queue();
+                }
+            }
+            case "purge" -> {
+                event.getChannel().getHistory().retrievePast(Integer.parseInt(args[1])).queue(messages -> {
+                    event.getChannel().purgeMessages(messages);
+                });
+                event.reply("Purging messages").setEphemeral(true).queue();
+            }
+            case "error" -> throw new Exception(args[1]);
+            case "db" -> {
+                if (Objects.equals(args[1], "write")) {
+                    db.write(args[2], args[3], args[4]);
+                } else if (Objects.equals(args[1], "read")) {
+                    if (args.length > 4 && args[4].equals("--code")) {
+                        event.reply("```" + db.read(args[2], args[3]) + "```").setEphemeral(true).queue();
+                        return 1;
+                    }
+                    event.reply(db.read(args[2], args[3])).setEphemeral(true).queue();
+                } else if (Objects.equals(args[1], "remove")) {
+                    db.remove(args[2], args[3]);
+                }
+            }
+            case "say" -> {
+                event.reply("erm, freddy fazbar!!!??!??").setEphemeral(true).queue();
+                event.getChannel().sendMessage(sys.getExcept(args, 0, " ")).queue();
+            }
+            case null, default -> event.reply("Invalid command.").queue();
         }
         return 0;
     }

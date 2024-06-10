@@ -11,7 +11,9 @@ import java.util.Objects;
 
 
 @CommandInfo(
-        slashCommand = "setstatus"
+        slashCommand = "setstatus",
+        usage = "<status>",
+        description = "Set a status that will be displayed in your profile."
 )
 public class SetStatusCommand implements Command {
     @Override

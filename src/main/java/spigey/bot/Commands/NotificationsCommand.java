@@ -9,7 +9,8 @@ import java.util.Objects;
 
 
 @CommandInfo(
-        slashCommand = "notifications"
+        slashCommand = "notifications",
+        description = "View your notifications."
 )
 public class NotificationsCommand implements Command {
     @Override

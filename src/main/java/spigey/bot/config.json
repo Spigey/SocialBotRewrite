@@ -3,5 +3,5 @@
   "DEFAULT_VALUE": "0",
   "DATABASE_MAIN": "src/main/java/spigey/bot/system/database/database.json",
   "DATABASE_TEST": "src/main/java/spigey/bot/system/database/test_database.json",
-  "DATABASE": "MAIN"
+  "DATABASE": "TEST"
 }

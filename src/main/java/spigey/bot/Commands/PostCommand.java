@@ -54,6 +54,7 @@ public class PostCommand implements Command {
         if(Objects.equals(db.read(db.read(event.getUser().getId(), "account"), "verified"), "0")) if(event.getOption("attachment") != null && !event.getOption("attachment").getAsAttachment().getContentType().contains("image/")){sys.warn(event.getUser().getId() + " attempted to upload " + event.getOption("attachment").getAsAttachment().getContentType()); event.reply("You are not allowed to post this file type!").setEphemeral(true).queue(); return 0;}
         JSONArray channelsArray = db.getArray("channels");
         String username = db.read(event.getUser().getId(), "account");
+        final String postID = UUID.randomUUID().toString();
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle(String.format("New post by @%s %s", username, db.read(username, "verified", "")))
                 .setDescription(txt(event.getOption("content").getAsString()))
@@ -100,7 +101,12 @@ public class PostCommand implements Command {
                     });
                     continue;
                 }
-                try{post.sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue();} catch(InsufficientPermissionException e){sys.warn("Failed to post to guild " + event.getJDA().getGuildById(post.getGuild().getId()).getName() + ": Insufficient Permissions!");}
+                try{
+                    post.sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue(msg -> {
+                        try{db.postMeta(postID, msg.getGuild().getId() + "-" + msg.getId());}
+                        catch(Exception L){sys.errInfo(L);}
+                    });
+                } catch(InsufficientPermissionException e){sys.warn("Failed to post to guild " + event.getJDA().getGuildById(post.getGuild().getId()).getName() + ": Insufficient Permissions!");}
             }
         }
         Pattern mentionPattern = Pattern.compile("@(\\w[\\w._]*)");
@@ -140,7 +146,12 @@ public class PostCommand implements Command {
                     catch(ErrorResponseException L){dkjdfh.appendReplacement(sb, "@unkno...");}
                 }
                 dkjdfh.appendTail(sb);
-                db.write(username, "posts", sys.trimMarkdown("\n[" + sys.trim(sb.toString(),10) +"](" + url.get() + ")" + db.read(username, "posts", ""), 10));
+                String reustl = Arrays.stream(sb.toString().split("\\s+"))
+                        .map(word -> badWords.stream().anyMatch(bad -> word.toLowerCase().contains(bad))
+                                ? word.replaceAll(".", "?")
+                                : word)
+                        .collect(Collectors.joining(" "));
+                db.write(username, "posts", sys.trimMarkdown("\n[" + sys.trim(rmMarkdown(reustl),23) +"](" + url.get() + ")" + db.read(username, "posts", ""), 10));
             } catch (Exception e) {/**/}
         });
         if(!Objects.equals(db.read(username, "verified"), "0")) return 0;
@@ -182,5 +193,9 @@ public class PostCommand implements Command {
                 .collect(Collectors.joining(" "));
 
         return txt.replaceAll("\\\\n", "\n");
+    }
+
+    private static String rmMarkdown(String text){
+        return Pattern.compile("\\[(.*?)]\\((.*?)\\)").matcher(text).replaceAll("$1");
     }
 }

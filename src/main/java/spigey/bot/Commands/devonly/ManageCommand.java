@@ -3,19 +3,24 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import spigey.bot.system.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import static spigey.bot.DiscordBot.prefix;
+import static spigey.bot.DiscordBot.*;
 import static spigey.bot.system.sys.*;
 
 @CommandInfo(
-        aliases = {"manage", "clear", "users", "chdel", "snipe", "encrypt", "decrypt", "rules"}
+        aliases = {"manage", "clear", "users", "chdel", "snipe", "encrypt", "decrypt", "rules", "delete"}
 )
 public class ManageCommand implements Command {
     @Override
@@ -69,6 +74,29 @@ public class ManageCommand implements Command {
                     .setColor(EmbedColor.PURPLE);
             event.getChannel().sendMessage("").addEmbeds(tempEmbed.build()).queue();
         }
+        if(args[0].equalsIgnoreCase(prefix + "delete")){
+            db.deletePost(event.getMessage().getReferencedMessage().getContentRaw());
+            try {
+                String username = event.getMessage().getReferencedMessage().getEmbeds().get(1).getTitle().split("@")[1].split(" ")[0];
+                StringBuffer sb = new StringBuffer();
+                Matcher dkjdfh = Pattern.compile("<@!?(\\d+)>").matcher(event.getMessage().getReferencedMessage().getEmbeds().get(1).getDescription());
+                while (dkjdfh.find()) {
+                    try {
+                        dkjdfh.appendReplacement(sb, "@" + jda.retrieveUserById(dkjdfh.group(1)).complete().getName());
+                    } catch (ErrorResponseException L) {
+                        dkjdfh.appendReplacement(sb, "@unkno...");
+                    }
+                }
+                dkjdfh.appendTail(sb);
+                String reustl = Arrays.stream(sb.toString().split("\\s+"))
+                        .map(word -> badWords.stream().anyMatch(bad -> word.toLowerCase().contains(bad))
+                                ? word.replaceAll(".", "?")
+                                : word)
+                        .collect(Collectors.joining(" "));
+                db.write(username, "posts", Pattern.compile("\\[" + Pattern.quote(reustl) + "]\\[(.*?)]").matcher(db.read(username, "posts")).replaceAll(""));
+            }catch(Exception L){sys.errInfo(L);}
+            return;
+        }
         String user = args[1].replaceAll("--self", event.getAuthor().getId());
         if(args[0].equalsIgnoreCase(prefix + "users")){util.userExecF(args[1]).thenAccept(users -> {StringBuilder usersString = new StringBuilder();
             for (User userr : users) {
@@ -76,7 +104,7 @@ public class ManageCommand implements Command {
             } event.getChannel().sendMessage(usersString.substring(0, usersString.length() - 2)).queue();}); return;}
         String username = db.read(user, "account", "???");
         String password = db.read(username, "password", "???");
-        AtomicReference<String> decryptedPassword = new AtomicReference<>(sys.decrypt(db.read(username, "password", "???"), env.ENCRYPTION_KEY));
+        AtomicReference<String> decryptedPassword = new AtomicReference<>(db.read(username, "password", "???"));
         String User = "???";
         try{
             User = String.format("%s (%s)", event.getJDA().retrieveUserById(user).complete().getAsTag(), user);
@@ -92,7 +120,7 @@ public class ManageCommand implements Command {
             EmbedBuilder embed = null;
             try {
                 try{usersString = new StringBuilder(usersString.substring(0, usersString.length() - 2));}catch(Exception L){error("Failed to retrieve users for ID " + user);}
-                if(flag(args, "-v")) decryptedPassword.set(sys.encrypt(decryptedPassword.get(), env.ENCRYPTION_KEY));
+                if(flag(args, "-v")) decryptedPassword.set(sys.decrypt(decryptedPassword.get(), env.ENCRYPTION_KEY));
                 String followers = String.valueOf(occur(db.read(username, "followers", "???"), ", "));
                 String following = String.valueOf(occur(db.read(username, "following", "???"), ", "));
                 if(flag(args, "-c")){

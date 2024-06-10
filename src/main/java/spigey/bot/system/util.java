@@ -170,29 +170,37 @@ public class util {
             try (FileReader reader = new FileReader("src/main/java/spigey/bot/system/database/database.json")) {
                 JSONObject existingData = (JSONObject) new JSONParser().parse(reader);
 
-                for (Object userId : existingData.keySet()) {
-                    JSONArray userData = (JSONArray) existingData.get(userId);
+                for (Object key : existingData.keySet()) {
+                    String userId = (String) key;
+                    JSONArray userData = (JSONArray) existingData.get(key);
                     for (Object obj : userData) {
                         JSONObject userObject = (JSONObject) obj;
-                        if (userObject.containsKey("account") && username.equals("*")) {
-                            RestAction<User> userAction = jda.retrieveUserById((String) userId);
+                        if (userObject.containsKey("account") && (username.equals("*") || userObject.get("account").equals(username))) {
+                            RestAction<User> userAction = jda.retrieveUserById(userId);
                             CompletableFuture<User> userFuture = new CompletableFuture<>();
                             userAction.queue(userFuture::complete, userFuture::completeExceptionally);
                             userFutures.add(userFuture);
-                        }
-                        if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
-                            RestAction<User> userAction = jda.retrieveUserById((String) userId);
-                            CompletableFuture<User> userFuture = new CompletableFuture<>();
-                            userAction.queue(userFuture::complete, userFuture::completeExceptionally);
-                            userFutures.add(userFuture);
+                            break; // Assumption: Only one match per userId
                         }
                     }
                 }
 
                 CompletableFuture.allOf(userFutures.toArray(new CompletableFuture[0]))
-                        .thenApply(v -> userFutures.stream().map(CompletableFuture::join).toList())
-                        .thenAccept(retrievedUsers::addAll)
-                        .thenRun(() -> future.complete(retrievedUsers));
+                        .thenApply(v -> {
+                            for (CompletableFuture<User> userFuture : userFutures) {
+                                try {
+                                    retrievedUsers.add(userFuture.join());
+                                } catch (Exception e) {
+                                    // Handle individual exceptions if needed
+                                }
+                            }
+                            return retrievedUsers;
+                        })
+                        .thenAccept(future::complete)
+                        .exceptionally(ex -> {
+                            future.completeExceptionally(ex);
+                            return null;
+                        });
 
             } catch (Exception e) {
                 future.completeExceptionally(e);
@@ -206,26 +214,25 @@ public class util {
 
     public static boolean userExec(String username, Consumer<User> action) {
         boolean found = false;
-        try {
-            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
-            for (Object userId : existingData.keySet()) {
-                JSONArray userData = (JSONArray) existingData.get(userId);
+        try (FileReader reader = new FileReader("src/main/java/spigey/bot/system/database/database.json")) {
+            JSONObject existingData = (JSONObject) new JSONParser().parse(reader);
+
+            if (existingData.containsKey(username)) {
+                JSONArray userData = (JSONArray) existingData.get(username);
                 for (Object obj : userData) {
-                    JSONObject userObject = (JSONObject) obj;
-
-                    if (userObject.containsKey("account") && username.equals("*")) {
-                        jda.retrieveUserById((String) userId).queue(action);
-                        found = true;
-                    }
-
-                    if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
-                        jda.retrieveUserById((String) userId).queue(action);
-                        found = true;
+                    if (obj instanceof JSONObject && ((JSONObject) obj).containsKey("account")) {
+                        String userId = (String) ((JSONObject) obj).get("account");
+                        jda.retrieveUserById(userId).queue(user -> {
+                            if (user != null) {
+                                action.accept(user);
+                            }
+                        });
+                        return true;
                     }
                 }
             }
         } catch (Exception e) {
-            // not empty
+            sys.errInfo(e);
         }
         return found;
     }

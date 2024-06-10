@@ -1,5 +1,6 @@
 package spigey.bot.system;
 
+import net.dv8tion.jda.api.EmbedBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -11,10 +12,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static spigey.bot.DiscordBot.jda;
 import static spigey.bot.system.util.log;
 
 public class db {
@@ -248,4 +251,50 @@ public class db {
         return removedCount; // Return the count of removed elements
     }
 
+    public static void postMeta(String postID, String messageId) throws Exception {
+        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+        JSONObject postsData = (JSONObject) existingData.getOrDefault("posts", new JSONObject());
+
+        JSONObject postInfo = (JSONObject) postsData.getOrDefault(postID, new JSONObject());
+        JSONArray messageIds = (JSONArray) postInfo.getOrDefault("messageIds", new JSONArray());
+        messageIds.add(messageId);
+        postInfo.put("messageIds", messageIds);
+
+        postsData.put(postID, postInfo);
+        existingData.put("posts", postsData);
+
+        try (FileWriter database = new FileWriter(FILE_PATH)) {
+            database.write(existingData.toJSONString());
+        }
+    }
+
+    public static void deletePost(String postId) throws IOException, ParseException {
+        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+        JSONObject postsData = (JSONObject) existingData.getOrDefault("posts", new JSONObject());
+
+        if (postsData.containsKey(postId)) {
+            JSONObject postInfo = (JSONObject) postsData.get(postId);
+            JSONArray messageIds = (JSONArray) postInfo.get("messageIds");
+
+            for (Object messageIdObj : messageIds) {
+                String[] split = ((String) messageIdObj).split("-");
+                jda.getGuildById(split[0]).getTextChannelById(db.read("channels", split[0])).retrieveMessageById(split[1]).complete().editMessageEmbeds(new EmbedBuilder(jda.getGuildById(split[0]).getTextChannelById(db.read("channels", split[0])).retrieveMessageById(split[1]).complete().getEmbeds().get(0)).setDescription("*This post has been removed by a " + jda.getSelfUser().getName() + " moderator.*").build()).queue();
+                jda.getGuildById(split[0]).getTextChannelById(db.read("channels", split[0])).retrieveMessageById(split[1]).complete().editMessageComponents(Collections.emptyList()).queue();
+            }
+
+            postsData.remove(postId);
+            existingData.put("posts", postsData);
+
+            try (FileWriter database = new FileWriter(FILE_PATH)) {
+                database.write(existingData.toJSONString());
+            }
+        }
+    }
+
+    public static String postId(String messageId) throws IOException, ParseException {
+        JSONObject postsData = (JSONObject) ((JSONObject) new JSONParser().parse(new FileReader(FILE_PATH))).getOrDefault("posts", new JSONObject());
+        for (Object Id : postsData.keySet())
+            if (((JSONArray) ((JSONObject) postsData.get(Id)).get("messageIds")).stream().anyMatch(msgId -> ((String) msgId).split("-")[1].equals(messageId))) return (String) Id;
+        return null;
+    }
 }

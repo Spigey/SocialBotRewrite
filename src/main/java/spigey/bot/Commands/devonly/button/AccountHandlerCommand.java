@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import spigey.bot.system.*;
 
 import static spigey.bot.DiscordBot.BotOwner;
+import static spigey.bot.DiscordBot.jda;
 
 @CommandInfo(
         buttonId = "snipe"
@@ -15,11 +16,12 @@ public class AccountHandlerCommand implements Command {
         if (!event.getMember().getId().equals(BotOwner)) return;
         String username = event.getMessage().getEmbeds().get(0).getDescription().split("`")[1];
         String user = event.getMessage().getContentRaw();
-        db.remove(username);
-        db.remove(user, "token");
-        util.userExec(username, UserN -> {
+        sys.debug(util.userExec(username, UserN -> {
             db.remove(UserN.getId(), "account");
-        });
+            sys.debug("Removed key account for user " + jda.retrieveUserById(UserN.getId()).complete().getName());
+        }));
+        sys.debug("asdasdsad");
+        db.remove(username);
         event.reply(username + " has been sniped successfully.").setEphemeral(true).queue();
         event.editButton(event.getButton().asDisabled()).queue();
         MessageEmbed punishLog = new EmbedBuilder()

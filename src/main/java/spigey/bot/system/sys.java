@@ -340,4 +340,15 @@ public class sys {
         return token.toString();
     }
 
+    public static String hashToken(String token) {
+        try {
+            byte[] hashBytes = MessageDigest.getInstance("SHA-256").digest(token.getBytes());
+            Formatter formatter = new Formatter();
+            for (byte b : hashBytes) formatter.format("%02x", b);
+            return formatter.toString().substring(0, 6);
+        } catch (Exception e) {
+            sys.errInfo(e);
+        }
+        return null;
+    }
 }

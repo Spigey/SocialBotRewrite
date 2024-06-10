@@ -66,7 +66,9 @@ public class DiscordBot extends ListenerAdapter {
             .addEventListeners(new DiscordBot()).setShardsTotal(5).build().getShardById(2); */
     public static JDA jda = JDABuilder.createDefault(env.TOKEN)
             .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
-            .addEventListeners(new DiscordBot()).build();
+            .addEventListeners(new DiscordBot())
+            .setActivity(Activity.watching("your posts"))
+            .build();
     public static List<String> badWords = new ArrayList<>();
     public static TextChannel console = null;
     public static JSONObject config;
@@ -194,6 +196,9 @@ public class DiscordBot extends ListenerAdapter {
                         } else if(args[1].equals("retrieve")){
                             event.getChannel().sendMessage("").addFiles(FileUpload.fromData(new ByteArrayInputStream(sys.encrypt(db.get(), env.ENCRYPTION_KEY).getBytes(StandardCharsets.UTF_8)), "database.json")).queue();
                             log = "";
+                        } else if(args[1].equals("delete")){
+                            db.deletePost(args[2]);
+                            log = "ok doen";
                         }
                         else{sys.warn("Invalid input.");}
                         // event.getChannel().sendMessage("`" + log + "`").queue();

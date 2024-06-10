@@ -15,9 +15,6 @@ import java.nio.charset.StandardCharsets;
 import static spigey.bot.system.sys.choice;
 import static spigey.bot.system.sys.sendApiRequest;
 
-@CommandInfo(
-        slashCommand = "google"
-)
 public class GoogleCommand implements Command {
     @Override
     public int slashCommand(SlashCommandInteractionEvent event) throws Exception {
