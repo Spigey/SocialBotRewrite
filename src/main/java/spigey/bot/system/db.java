@@ -10,6 +10,9 @@ import spigey.bot.DiscordBot;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -25,27 +28,32 @@ public class db {
     public static final String FILE_PATH = Objects.equals(DiscordBot.config.get("DATABASE").toString(), "MAIN") ? DiscordBot.config.get("DATABASE_MAIN").toString() : DiscordBot.config.get("DATABASE_TEST").toString();
 
     public static void write(String user, String key, String value) throws IOException, ParseException {
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+        try(RandomAccessFile file = new RandomAccessFile(FILE_PATH, "r")) {
+            FileChannel channel = file.getChannel();
+            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
 
-        JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
-        JSONObject userObjectToUpdate = null;
-        for (Object o : userData) {
-            if (((JSONObject) o).containsKey(key)) {
-                userObjectToUpdate = (JSONObject) o;
-                break;
+            JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
+            JSONObject userObjectToUpdate = null;
+            for (Object o : userData) {
+                if (((JSONObject) o).containsKey(key)) {
+                    userObjectToUpdate = (JSONObject) o;
+                    break;
+                }
             }
-        }
 
-        if (userObjectToUpdate != null) {
-            userObjectToUpdate.put(key, value);
-        } else {
-            userData.add(new JSONObject() {{ put(key, value); }});
-        }
+            if (userObjectToUpdate != null) {
+                userObjectToUpdate.put(key, value);
+            } else {
+                userData.add(new JSONObject() {{
+                    put(key, value);
+                }});
+            }
 
-        existingData.put(user, userData);
+            existingData.put(user, userData);
 
-        try (FileWriter database = new FileWriter(FILE_PATH)) {
-            database.write(existingData.toJSONString());
+            try (FileWriter database = new FileWriter(FILE_PATH)) {
+                database.write(existingData.toJSONString());
+            }
         }
     }
 
