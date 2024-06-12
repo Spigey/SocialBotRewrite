@@ -120,21 +120,25 @@ public class util {
     }
     public static boolean notif(String username, MessageEmbed embed) throws Exception {
         boolean found = false;
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
-        for (Object userId : existingData.keySet()) {
-            JSONArray userData = (JSONArray) existingData.get(userId);
-            for (Object obj : userData) {
-                JSONObject userObject = (JSONObject) obj;
-                if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
-                    User user = jda.retrieveUserById((String) userId).complete();
-                    if (user != null) {
-                        found = true;
-                        user.openPrivateChannel().queue(privateChannel -> {
-                            privateChannel.sendMessage("").addEmbeds(embed).queue();
-                        });
+        try {
+            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
+            for (Object userId : existingData.keySet()) {
+                JSONArray userData = (JSONArray) existingData.get(userId);
+                for (Object obj : userData) {
+                    JSONObject userObject = (JSONObject) obj;
+                    if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
+                        User user = jda.retrieveUserById((String) userId).complete();
+                        if (user != null) {
+                            found = true;
+                            user.openPrivateChannel().queue(privateChannel -> {
+                                privateChannel.sendMessage("").addEmbeds(embed).queue();
+                            });
+                        }
                     }
                 }
             }
+        }catch(Exception L){
+            return false;
         }
         return found;
     }

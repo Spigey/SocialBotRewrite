@@ -76,6 +76,7 @@ public class ManageCommand implements Command {
         }
         if(args[0].equalsIgnoreCase(prefix + "delete")){
             db.deletePost(event.getMessage().getReferencedMessage().getContentRaw());
+            event.getMessage().getReferencedMessage().delete().queue();
             try {
                 String username = event.getMessage().getReferencedMessage().getEmbeds().get(1).getTitle().split("@")[1].split(" ")[0];
                 StringBuffer sb = new StringBuffer();
