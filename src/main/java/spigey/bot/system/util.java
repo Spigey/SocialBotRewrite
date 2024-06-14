@@ -138,6 +138,7 @@ public class util {
                 }
             }
         }catch(Exception L){
+            sys.errInfo(L);
             return false;
         }
         return found;

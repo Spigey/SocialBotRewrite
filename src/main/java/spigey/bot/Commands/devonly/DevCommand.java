@@ -46,9 +46,6 @@ public class DevCommand implements Command {
             } else{
                 event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("1246090098022547528")).queue();
             }
-        } else if(Objects.equals(args[1], "magique")){
-            Guild guild = event.getJDA().getGuildById("1247582660126314598");
-            guild.getTextChannels().forEach(textChannel -> textChannel.delete().queue());
         }
     }
 
