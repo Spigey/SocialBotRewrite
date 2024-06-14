@@ -71,7 +71,7 @@ public class sys {
             return null;
         }
     }
-    public static String getUserInput(String message) {
+    public static String getInput(String message) {
         Scanner scanner = new Scanner(System.in);
         System.out.print(message);
         return scanner.nextLine();
@@ -83,9 +83,8 @@ public class sys {
     }
 
     public static void sleep(long milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException e) {
+        try {Thread.sleep(milliseconds);}
+        catch (InterruptedException e) {
             errInfo(e);
         }
     }
@@ -180,10 +179,7 @@ public class sys {
     }
 
     public static String strOrDefault(@Nullable String str, String def){
-        if(str == null){
-            return def;
-        }
-        return str;
+        return str == null ? def : str;
     }
 
     public static String generateToken(String username, String password) throws NoSuchAlgorithmException {
@@ -200,18 +196,10 @@ public class sys {
     }
 
     public static String passToStr(String password, String mask){
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < password.length(); i++) {
-            sb.append(mask);
-        }
-        return sb.toString();
+        return String.valueOf(mask).repeat(password.length());
     }
     public static double passStrength(String password) {
-        Zxcvbn ps = new Zxcvbn();
-        Strength strength = ps.measure(password);
-        double guesses = strength.getGuesses();
-        double logGuesses = Math.log10(guesses);
-        return Double.parseDouble(String.format("%.2f",Math.min((logGuesses / 14) * 100, 100)));
+        return Double.parseDouble(String.format("%.2f",Math.min((Math.log10(new Zxcvbn().measure(password).getGuesses()) / 14) * 100, 100)));
     }
     public static String sendApiRequest(String url, String method, Map<String, String> headers, String body) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
