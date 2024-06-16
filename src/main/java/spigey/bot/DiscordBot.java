@@ -153,6 +153,7 @@ public class DiscordBot extends ListenerAdapter {
         System.setOut(new DiscordPrintStream(System.out, console));
         System.setErr(new DiscordPrintStream(System.err , console));
         sys.debug("Logged in as " + event.getJDA().getSelfUser().getName() + "!");
+        sys.debug(event.getGuildTotalCount());
     }
 
 

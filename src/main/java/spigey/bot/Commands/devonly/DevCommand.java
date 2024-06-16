@@ -14,7 +14,7 @@ import static spigey.bot.system.sys.debug;
 
 
 @CommandInfo(
-        limitIds = {"1203448484498243645", "941366409399787580", "632607624742961153"},
+        limitIds = {"1203448484498243645", "941366409399787580"},
         limitMsg = ":eyes:",
         slashCommand = "dev"
 )

@@ -24,7 +24,7 @@ public class RegisterCommand implements Command {
         if(!Objects.equals(db.read(event.getUser().getId(), "account"), "0")){event.reply("You are already logged in!").setEphemeral(true).queue(); return 0;}
         if(!Objects.equals(db.read(username, "password"), "0")){event.reply("There is already a user with that username!").setEphemeral(true).queue(); return 0;}
         if(!username.matches("^[a-zA-Z0-9_.]*$") || username.length() < 3 || username.length() > 24){event.reply("Invalid username. Must be between 3 and 24 characters in length").setEphemeral(true).queue(); return 0;}
-        if(password.length() < 6 || password.length() > 40){event.reply("Invalid password. Must be between 6 and 24 characters in length").setEphemeral(true).queue(); return 0;}
+        if(password.length() < 6 || password.length() > 40){event.reply("Invalid password. Must be between 6 and 40 characters in length").setEphemeral(true).queue(); return 0;}
         db.write(user, "account", username);
         db.write(username, "password", sys.encrypt(password, env.ENCRYPTION_KEY));
         if(Objects.equals(db.read(user, "token"), "0")) db.write(user, "token", sys.encrypt(sys.generateToken(username, password), env.ENCRYPTION_KEY));
