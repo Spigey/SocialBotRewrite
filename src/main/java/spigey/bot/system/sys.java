@@ -339,4 +339,9 @@ public class sys {
         }
         return null;
     }
+
+    public static boolean bool(Object text) {
+        Object[] True = { "true", "1", "yes", "y" };
+        return text != null && Arrays.asList(True).contains(text.toString().toLowerCase());
+    }
 }
