@@ -135,7 +135,9 @@ public class DiscordBot extends ListenerAdapter {
                         ),
                 Commands.slash("setstatus", "Set a status that will be displayed in your profile.")
                         .addOption(OptionType.STRING, "status", "Status. Leave this empty to remove your status."),
-                Commands.slash("notifications", "View your notifications.")
+                Commands.slash("notifications", "View your notifications."),
+                Commands.slash("report", "Report a bug or a user.")
+                        .addOption(OptionType.STRING, "text", "User or bug.", true)
         ).queue();
         try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/spigey/bot/system/badwords.txt"))) {
             String line;
@@ -281,6 +283,10 @@ public class DiscordBot extends ListenerAdapter {
                             db.write(db.read(event.getJDA().retrieveUserById(args[2]).complete().getId(), "account", ""), "ai_personality", getAtLeast(args, 3, " "));
                             sys.debug("Updated ai personality for " + event.getJDA().retrieveUserById(args[2]).complete().getName() + ".");
                         }
+                    }
+
+                    if(args[0].equals("fortnite")){
+                        event.getMessage().reply("```" + trim(sys.exec(sys.getAtLeast(args, 1, " ")), 1600) + "```").queue();
                     }
 
 
