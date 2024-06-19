@@ -159,7 +159,7 @@ public class ManageCommand implements Command {
                                 **Following**: (%s) `%s `
                                 **Origin**: `%s`
                                 **Users**: `%s`
-                                **Posts**: %s""", username, db.read(username, "verified", ""), db.read(user, "banned", "false").replace("true", EmojiDB.Banned), finalUser, db.read(username, "status", "///"), db.read(username, "last_online"), sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword.get()), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), followers, db.read(username, "followers", "???"), following, db.read(username, "following", "???"), db.read(user, "origin", "???"), usersString, db.read(username, "posts", "`???`")))
+                                **Posts**: %s""", username, db.read(username, "verified", ""), db.read(user, "banned", "").replace("true", EmojiDB.Banned), finalUser, db.read(username, "status", "///"), db.read(username, "last_online"), sys.passToStr(password, "*"), decryptedPassword, sys.passStrength(decryptedPassword.get()), sys.decrypt(db.read(user, "token", ""), env.ENCRYPTION_KEY).length(), followers, db.read(username, "followers", "???"), following, db.read(username, "following", "???"), db.read(user, "origin", "???"), usersString, db.read(username, "posts", "`???`")))
                         .setColor(EmbedColor.RED);
             } catch (Exception e) {errInfo(e);}
             event.getMessage().reply(user).addEmbeds(embed.build()).addActionRow(
