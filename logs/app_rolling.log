@@ -97,3 +97,36 @@ net.dv8tion.jda.api.exceptions.ContextException: null
 	at com.neovisionaries.ws.client.ReadingThread.main(ReadingThread.java:108)
 	at com.neovisionaries.ws.client.ReadingThread.runMain(ReadingThread.java:64)
 	at com.neovisionaries.ws.client.WebSocketThread.run(WebSocketThread.java:45)
+2024-06-21 21:26:46 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 21:26:47 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 21:26:47 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 21:29:48 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 21:29:48 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 21:29:48 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 21:35:24 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 21:35:25 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 21:35:25 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 21:40:50 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 21:40:50 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 21:40:51 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 21:44:03 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 21:44:03 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 21:44:04 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 21:47:02 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 21:47:02 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 21:47:03 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 21:54:37 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 21:54:37 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 21:54:37 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 21:59:05 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 21:59:06 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 21:59:06 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 22:15:53 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 22:15:53 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 22:15:54 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 22:26:28 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-21 22:26:28 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 22:26:28 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-21 23:35:35 [JDA MainWS-ReadThread] WARN  n.d.j.i.requests.WebSocketClient - Got disconnected from WebSocket (Code 1000). Appending to reconnect queue
+2024-06-21 23:35:37 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-21 23:35:37 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished (Re)Loading!

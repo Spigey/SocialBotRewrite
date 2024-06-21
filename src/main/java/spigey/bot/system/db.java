@@ -1,262 +1,169 @@
 package spigey.bot.system;
-import com.google.api.core.ApiFuture;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.firestore.*;
+
+import org.mapdb.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import spigey.bot.DiscordBot;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+
+import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 import static spigey.bot.DiscordBot.jda;
 
 public class db {
-    private static Firestore db;
+    private static DB db;
     private static final Logger logger = LoggerFactory.getLogger(db.class);
-    private static final Map<String, String> config = Map.of(
-            "Collection", "data",
-            "DefaultValue", "0"
-    );
+    private static ConcurrentMap<String, String> dataMap;
+    private static ConcurrentMap<String, HashSet<String>> postsMap;
+    private static String def;
 
-    /**
-     * Initializes the Firestore Database.
-     *
-     * @param ProjectID The project ID of the Firestore project.
-     * @throws IOException If there's an error initializing the database.
-     */
-    public static void init(String ProjectID) throws IOException {
-        InputStream serviceAccount = db.class.getClassLoader().getResourceAsStream("account.json");
-        db = FirestoreOptions.getDefaultInstance().toBuilder()
-                .setProjectId(ProjectID)
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .build().getService();
-        logger.info("Initialized Firestore Database");
-    }
-
-    /**
-     * Writes a key-value pair to a Firestore document.
-     *
-     * @param User   The document ID (user identifier).
-     * @param Key    The key to store the value under.
-     * @param Value  The value to store.
-     */
-    public static void write(String User, String Key, String Value){
-        try{
-            db.collection(config.get("Collection")).document(User).update(Key, Value).get();
-        }catch (Exception e){
-            logger.error("Failed to write to Firestore with error: {}", sys.getStackTrace(e));
-        }
-    }
-
-    /**
-     * Reads a value from a Firestore document, with a default value if not found.
-     *
-     * @param User         The document ID (user identifier).
-     * @param Key          The key to retrieve the value from.
-     * @param DefaultValue The default value to return if the key is not found or an error occurs.
-     * @return The value associated with the key, or the default value if not found.
-     */
-    public static String read(String User, String Key, String DefaultValue){
-        try{
-            DocumentSnapshot document = db.collection(config.get("Collection")).document(User).get().get();
-            if(document.exists() && document.contains(Key)) return document.getString(Key);
+    public static void init(String DatabaseFile, String DefaultValue) {
+        try {
+            File dbFile = new File(DatabaseFile);
+            dbFile.getParentFile().mkdirs();
+            if (!dbFile.exists()) dbFile.createNewFile();
+            db = DBMaker.fileDB(DatabaseFile).fileMmapEnable().make();
+            def = DefaultValue;
+            dataMap = db.hashMap("data", Serializer.STRING, Serializer.STRING).createOrOpen();
+            postsMap = db.hashMap("posts", Serializer.STRING, Serializer.JAVA).createOrOpen();
+            logger.info("Initialized MapDB Database");
         } catch (Exception e) {
-            logger.error("Failed to read from Firestore with error: {}", sys.getStackTrace(e));
+            logger.error("Failed to initialize MapDB Database: {}", sys.getStackTrace(e));
         }
-        return DefaultValue;
     }
 
-    /**
-     * Reads a value from a Firestore document.
-     *
-     * @param User The document ID (user identifier).
-     * @param Key  The key to retrieve the value from.
-     * @return The value associated with the key, or the default value if not found.
-     */
-    public static String read(String User, String Key){
-        return read(User, Key, config.get("DefaultValue"));
+    public static void write(String User, String Key, String Value) {
+        try {
+            dataMap.put(User + "_" + Key, Value);
+            db.commit();
+        } catch (Exception e) {
+            logger.error("Failed to write to database with error: {}", sys.getStackTrace(e));
+        }
     }
 
-    /**
-     * Adds a numeric value to an existing key in a Firestore document, or creates the key with the value if it doesn't exist.
-     *
-     * @param User  The document ID (user identifier).
-     * @param Key   The key to add the value to.
-     * @param Value The numeric value to add.
-     */
-    public static void add(String User, String Key, Object Value){
+    public static String read(String User, String Key, String DefaultValue) {
+        String value = dataMap.get(User + "_" + Key);
+        return value != null ? value : DefaultValue;
+    }
+
+    public static String read(String User, String Key) {
+        return read(User, Key, def);
+    }
+
+    public static void add(String User, String Key, int Value){
         try{
-            DocumentReference doc = db.collection(config.get("Collection")).document(User);
-            int finalValue = Integer.parseInt(Value.toString());
-            db.runTransaction(transaction -> {
-                DocumentSnapshot snapshot = transaction.get(doc).get();
-                transaction.update(doc, Key, snapshot.contains(Key) ? snapshot.getLong(Key).intValue() + finalValue : finalValue);
-                return null;
-            }).get();
+            write(User, Key, String.valueOf(Integer.parseInt(read(User, Key)) + Value));
+            db.commit();
         } catch(Exception e){
-            logger.error("Failed to add to Firestore with error: {}", sys.getStackTrace(e));
+            logger.error("Failed to add to database with error: {}", sys.getStackTrace(e));
         }
     }
 
-    /**
-     * Removes a specific key-value pair from a Firestore document.
-     *
-     * @param User The document ID (user identifier).
-     * @param Key  The key to remove.
-     */
     public static void remove(String User, String Key){
-        HashMap <String, Object> updates = new HashMap<>();
-        updates.put(Key, FieldValue.delete());
-        db.collection(config.get("Collection")).document(User).update(updates);
+        try {
+            dataMap.remove(User + "_" + Key);
+            db.commit();
+        } catch (Exception e) {
+            logger.error("Failed to remove from database with error: {}", sys.getStackTrace(e));
+        }
     }
 
-    /**
-     * Removes an entire document from the Firestore collection.
-     *
-     * @param User The document ID (user identifier) to remove.
-     */
     public static void remove(String User){
-        db.collection(config.get("Collection")).document(User).delete();
+        try {
+            dataMap.keySet().removeIf(key -> key.startsWith(User + "_"));
+            db.commit();
+        } catch (Exception e) {
+            logger.error("Failed to remove from database with error: {}", sys.getStackTrace(e));
+        }
     }
 
-    /**
-     * Retrieves an array from a Firestore document and converts it to a JSONArray.
-     *
-     * @param Array The ID of the document containing the array.
-     * @return A JSONArray representing the data in the document, or an empty JSONArray if not found or an error occurs.
-     */
     public static JSONArray getArray(String Array) {
         JSONArray result = new JSONArray();
         try {
-            DocumentSnapshot document = db.collection(config.get("Collection")).document(Array).get().get();
-            if (document.exists()) {
-                for (Map.Entry<String, Object> entry : document.getData().entrySet()) {
+            for (Map.Entry<String, String> entry : dataMap.entrySet()) {
+                if (entry.getKey().startsWith(Array + "_")) {
                     JSONObject obj = new JSONObject();
-                    obj.put(entry.getKey(), entry.getValue());
+                    obj.put(entry.getKey().substring(Array.length() + 1), entry.getValue());
                     result.add(obj);
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed to get array from Firestore with error: {}", sys.getStackTrace(e));
+            logger.error("Failed to get array from database with error: {}", sys.getStackTrace(e));
         }
         return result;
     }
 
-    /**
-     * Calculates the total number of keys across all documents in the collection.
-     *
-     * @return The total number of keys.
-     */
     public static int keySize(){
-        int count = 0;
-        try{
-            for(DocumentReference doc : db.collection(config.get("Collection")).listDocuments()){
-                DocumentSnapshot document = doc.get().get();
-                if(!document.exists()) continue;
-                count += document.getData().size();
-            }
-        }catch (Exception e){
-            logger.error("Failed to retrieve key size from Firestore with error: {}", sys.getStackTrace(e));
-        }
-        return count;
+        return dataMap.size();
     }
 
-    /**
-     * Retrieves the user ID associated with a given token.
-     *
-     * @param Token The token to search for.
-     * @return The user ID associated with the token, or null if not found.
-     */
     public static String idFromToken(String Token){
         try{
-            for(DocumentReference doc : db.collection(config.get("Collection")).listDocuments()){
-                DocumentSnapshot document = doc.get().get();
-                if(!(document.exists() && document.contains("token") && document.getString("token").equals(Token))) continue;
-                return document.getId();
+            for(Map.Entry<String, String> entry : dataMap.entrySet()) {
+                if (entry.getKey().endsWith("_token") && entry.getValue().equals(Token)) {
+                    return entry.getKey().split("_")[0]; // Extract User from the composite key
+                }
             }
         } catch(Exception e){
-            logger.error("Failed to retrieve ID from Token from Firestore with error: {}", sys.getStackTrace(e));
+            logger.error("Failed to retrieve ID from Token from database with error: {}", sys.getStackTrace(e));
         }
         return null;
     }
 
-    /**
-     * Stores post metadata for a specific post ID, including the associated message IDs.
-     *
-     * @param PostID     The unique identifier for the post.
-     * @param MessageID  The unique identifier for the message associated with the post.
-     */
-    public static void postMeta(String PostID, String MessageID){
-        try{
-            DocumentReference doc = db.collection(config.get("Collection")).document("posts");
-            db.runTransaction(transaction -> {
-                DocumentSnapshot snapshot = transaction.get(doc).get();
-
-                Map<String, Object> data = snapshot.exists() ? snapshot.getData() : new HashMap<>();
-                List<String> msgIDs = (List<String>) data.getOrDefault(PostID, new ArrayList<>());
-                msgIDs.add(MessageID);
-                data.put(PostID, msgIDs);
-                transaction.set(doc, data, SetOptions.merge());
-                return null;
-            }).get();
-        } catch(Exception e){
-            logger.error("Failed to update Post Metadata from Firestore with error: {}", sys.getStackTrace(e));
+    public static void postMeta(String PostID, String MessageID) {
+        try {
+            postsMap.compute(PostID, (key, value) -> {
+                if (value == null) {
+                    value = new HashSet<>();
+                }
+                value.add(MessageID);
+                return value;
+            });
+            db.commit();
+        } catch (Exception e) {
+            logger.error("Failed to update Post Metadata from database with error: {}", sys.getStackTrace(e));
         }
     }
 
-    /**
-     * Deletes a post with the given PostID from Firestore and updates the associated Discord messages.
-     *
-     * @param PostID The unique identifier for the post to delete.
-     */
-    public static void deletePost(String PostID){
+    public static void deletePost(String PostID) {
         try {
-            DocumentReference doc = db.collection(config.get("Collection")).document("posts");
-            DocumentSnapshot document = doc.get().get();
-            if(!document.exists() || !document.contains(PostID)){
-                logger.warn("Post with ID {} not found in Firestore", PostID);
+            if (!postsMap.containsKey(PostID)) {
+                logger.warn("Post with ID {} not found in database", PostID);
                 return;
             }
-            List<String> msgIDs = (List<String>) document.getData().get(PostID);
-            if(msgIDs == null) return;
-            for(String msgID : msgIDs){
+            Set<String> msgIDs = postsMap.get(PostID);
+            if (msgIDs == null) return;
+            for (String msgID : msgIDs) {
                 String[] split = msgID.split("-");
                 Message message = jda.getGuildById(split[0]).getTextChannelById(split[1]).retrieveMessageById(split[2]).complete();
-                if(message == null) continue;
+                if (message == null) continue;
                 message.editMessageEmbeds(new EmbedBuilder(message.getEmbeds().get(0))
                         .setDescription("*This post has been removed by a " + jda.getSelfUser().getName() + " moderator.*").build()).queue();
                 message.delete().queue();
                 message.editMessageComponents(Collections.emptyList()).queue();
             }
-            doc.update(PostID, FieldValue.delete()).get();
-        } catch(Exception e){
-            logger.error("Failed to delete Post from Firestore with error: {}", sys.getStackTrace(e));
+            postsMap.remove(PostID);
+            db.commit();
+        } catch (Exception e) {
+            logger.error("Failed to delete Post from database with error: {}", sys.getStackTrace(e));
         }
     }
 
-    /**
-     * Retrieves the PostID associated with a given MessageID.
-     *
-     * @param MessageID The unique identifier of the message.
-     * @return The PostID associated with the message, or null if not found.
-     */
-    public static String postID(String MessageID){
+    public static String postID(String MessageID) {
         try {
-            DocumentSnapshot document = db.collection(config.get("Collection")).document("posts").get().get();
-            if (!document.exists()) return null;
-            for (Map.Entry<String, Object> entry : document.getData().entrySet()) {
-                if (!(entry.getValue() instanceof List<?> msgIDs && msgIDs.contains(MessageID))) continue;
-                return entry.getKey();
+            for (Map.Entry<String, HashSet<String>> entry : postsMap.entrySet()) {
+                if (entry.getValue().contains(MessageID)) {
+                    return entry.getKey();
+                }
             }
-        } catch(Exception e){
-            logger.error("Failed to retrieve Post ID from Firestore with error: {}", sys.getStackTrace(e));
+        } catch (Exception e) {
+            logger.error("Failed to retrieve Post ID from database with error: {}", sys.getStackTrace(e));
         }
         return null;
     }
 }
+
