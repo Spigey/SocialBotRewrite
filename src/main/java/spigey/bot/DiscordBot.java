@@ -92,7 +92,7 @@ public class DiscordBot extends ListenerAdapter {
             console = jda.getGuildById("1219338270773874729").getTextChannelById("1247203483652849726");
         }catch(Exception L){/**/}
         // db.setDefaultValue((String) config.get("DEFAULT_VALUE"));
-        db.init("src/main/java/spigey/bot/system/database/database.db", "0");
+        db.init("src/main/java/spigey/bot/system/database/", "0");
         prefix = (String) config.get("PREFIX");
         log("  _____  _                       _   ____        _   \n |  __ \\(_)                     | | |  _ \\      | |  \n | |  | |_ ___  ___ ___  _ __ __| | | |_) | ___ | |_ \n | |  | | / __|/ __/ _ \\| '__/ _` | |  _ < / _ \\| __|\n | |__| | \\__ \\ (_| (_) | | | (_| | | |_) | (_) | |_ \n |_____/|_|___/\\___\\___/|_|  \\__,_| |____/ \\___/ \\__|\n                                                     ");
         commandHandler = new CommandHandler();

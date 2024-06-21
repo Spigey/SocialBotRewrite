@@ -1,19 +1,55 @@
-2024-06-21 18:01:19 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 18:01:20 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 18:01:20 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 18:13:01 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 18:13:01 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 18:13:01 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 18:16:08 [ForkJoinPool.commonPool-worker-2] ERROR n.d.jda.api.requests.RestAction - RestAction queue returned failure: [ErrorResponseException] 10062: Unknown interaction
-net.dv8tion.jda.api.exceptions.ContextException: null
-	at net.dv8tion.jda.api.exceptions.ContextException.here(ContextException.java:54)
-	at net.dv8tion.jda.api.requests.Request.<init>(Request.java:73)
-	at net.dv8tion.jda.internal.requests.RestActionImpl.queue(RestActionImpl.java:200)
-	at net.dv8tion.jda.internal.requests.restaction.interactions.InteractionCallbackImpl.queue(InteractionCallbackImpl.java:74)
+2024-06-22 00:01:45 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:01:46 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:01:46 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:04:56 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:04:56 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:04:56 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:05:34 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:05:35 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:05:35 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:05:41 [JDA MainWS-ReadThread] ERROR net.dv8tion.jda.api.JDA - One of the EventListeners had an uncaught exception
+java.lang.Error: Error: could not match input
+	at org.json.simple.parser.Yylex.zzScanError(Yylex.java:474)
+	at org.json.simple.parser.Yylex.yylex(Yylex.java:681)
+	at org.json.simple.parser.JSONParser.nextToken(JSONParser.java:269)
+	at org.json.simple.parser.JSONParser.parse(JSONParser.java:118)
+	at org.json.simple.parser.JSONParser.parse(JSONParser.java:81)
+	at org.json.simple.parser.JSONParser.parse(JSONParser.java:75)
+	at spigey.bot.system.db.getDocument(db.java:41)
+	at spigey.bot.system.db.read(db.java:68)
+	at spigey.bot.system.db.add(db.java:84)
+	at spigey.bot.DiscordBot.onMessageReceived(DiscordBot.java:168)
+	at net.dv8tion.jda.api.hooks.ListenerAdapter.onEvent(ListenerAdapter.java:403)
+	at net.dv8tion.jda.api.hooks.InterfacedEventManager.handle(InterfacedEventManager.java:96)
+	at net.dv8tion.jda.internal.hooks.EventManagerProxy.handleInternally(EventManagerProxy.java:88)
+	at net.dv8tion.jda.internal.hooks.EventManagerProxy.handle(EventManagerProxy.java:70)
+	at net.dv8tion.jda.internal.JDAImpl.handleEvent(JDAImpl.java:173)
+	at net.dv8tion.jda.internal.handle.MessageCreateHandler.handleInternally(MessageCreateHandler.java:136)
+	at net.dv8tion.jda.internal.handle.SocketHandler.handle(SocketHandler.java:39)
+	at net.dv8tion.jda.internal.requests.WebSocketClient.onDispatch(WebSocketClient.java:961)
+	at net.dv8tion.jda.internal.requests.WebSocketClient.onEvent(WebSocketClient.java:847)
+	at net.dv8tion.jda.internal.requests.WebSocketClient.handleEvent(WebSocketClient.java:825)
+	at net.dv8tion.jda.internal.requests.WebSocketClient.onBinaryMessage(WebSocketClient.java:1000)
+	at com.neovisionaries.ws.client.ListenerManager.callOnBinaryMessage(ListenerManager.java:385)
+	at com.neovisionaries.ws.client.ReadingThread.callOnBinaryMessage(ReadingThread.java:276)
+	at com.neovisionaries.ws.client.ReadingThread.handleBinaryFrame(ReadingThread.java:996)
+	at com.neovisionaries.ws.client.ReadingThread.handleFrame(ReadingThread.java:755)
+	at com.neovisionaries.ws.client.ReadingThread.main(ReadingThread.java:108)
+	at com.neovisionaries.ws.client.ReadingThread.runMain(ReadingThread.java:64)
+	at com.neovisionaries.ws.client.WebSocketThread.run(WebSocketThread.java:45)
+2024-06-22 00:06:36 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:06:36 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:06:37 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:07:45 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:07:45 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:07:46 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:09:52 [JDA MainWS-ReadThread] ERROR n.d.jda.api.requests.RestAction - RestAction queue returned failure
+java.lang.IllegalStateException: This interaction has already been acknowledged or replied to. You can only reply or acknowledge an interaction once!
+	at net.dv8tion.jda.internal.requests.restaction.interactions.InteractionCallbackImpl.tryAck(InteractionCallbackImpl.java:57)
+	at net.dv8tion.jda.internal.requests.restaction.interactions.InteractionCallbackImpl.queue(InteractionCallbackImpl.java:64)
 	at net.dv8tion.jda.api.requests.RestAction.queue(RestAction.java:572)
 	at net.dv8tion.jda.api.requests.RestAction.queue(RestAction.java:538)
-	at spigey.bot.Commands.RegisterCommand.slashCommand(RegisterCommand.java:32)
-	at spigey.bot.system.CommandHandler.onSlashCommand(CommandHandler.java:139)
+	at spigey.bot.system.CommandHandler.onSlashCommand(CommandHandler.java:161)
 	at spigey.bot.DiscordBot.onSlashCommandInteraction(DiscordBot.java:352)
 	at net.dv8tion.jda.api.hooks.ListenerAdapter.onEvent(ListenerAdapter.java:403)
 	at net.dv8tion.jda.api.hooks.InterfacedEventManager.handle(InterfacedEventManager.java:96)
@@ -34,16 +70,16 @@ net.dv8tion.jda.api.exceptions.ContextException: null
 	at com.neovisionaries.ws.client.ReadingThread.main(ReadingThread.java:108)
 	at com.neovisionaries.ws.client.ReadingThread.runMain(ReadingThread.java:64)
 	at com.neovisionaries.ws.client.WebSocketThread.run(WebSocketThread.java:45)
-2024-06-21 18:18:09 [ForkJoinPool.commonPool-worker-3] ERROR n.d.jda.api.requests.RestAction - RestAction queue returned failure: [ErrorResponseException] 10062: Unknown interaction
-net.dv8tion.jda.api.exceptions.ContextException: null
-	at net.dv8tion.jda.api.exceptions.ContextException.here(ContextException.java:54)
-	at net.dv8tion.jda.api.requests.Request.<init>(Request.java:73)
-	at net.dv8tion.jda.internal.requests.RestActionImpl.queue(RestActionImpl.java:200)
-	at net.dv8tion.jda.internal.requests.restaction.interactions.InteractionCallbackImpl.queue(InteractionCallbackImpl.java:74)
+2024-06-22 00:11:02 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:11:03 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:11:03 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:11:41 [JDA MainWS-ReadThread] ERROR n.d.jda.api.requests.RestAction - RestAction queue returned failure
+java.lang.IllegalStateException: This interaction has already been acknowledged or replied to. You can only reply or acknowledge an interaction once!
+	at net.dv8tion.jda.internal.requests.restaction.interactions.InteractionCallbackImpl.tryAck(InteractionCallbackImpl.java:57)
+	at net.dv8tion.jda.internal.requests.restaction.interactions.InteractionCallbackImpl.queue(InteractionCallbackImpl.java:64)
 	at net.dv8tion.jda.api.requests.RestAction.queue(RestAction.java:572)
 	at net.dv8tion.jda.api.requests.RestAction.queue(RestAction.java:538)
-	at spigey.bot.Commands.RegisterCommand.slashCommand(RegisterCommand.java:32)
-	at spigey.bot.system.CommandHandler.onSlashCommand(CommandHandler.java:139)
+	at spigey.bot.system.CommandHandler.onSlashCommand(CommandHandler.java:161)
 	at spigey.bot.DiscordBot.onSlashCommandInteraction(DiscordBot.java:352)
 	at net.dv8tion.jda.api.hooks.ListenerAdapter.onEvent(ListenerAdapter.java:403)
 	at net.dv8tion.jda.api.hooks.InterfacedEventManager.handle(InterfacedEventManager.java:96)
@@ -64,69 +100,30 @@ net.dv8tion.jda.api.exceptions.ContextException: null
 	at com.neovisionaries.ws.client.ReadingThread.main(ReadingThread.java:108)
 	at com.neovisionaries.ws.client.ReadingThread.runMain(ReadingThread.java:64)
 	at com.neovisionaries.ws.client.WebSocketThread.run(WebSocketThread.java:45)
-2024-06-21 18:36:40 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 18:36:41 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 18:36:41 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 18:37:06 [ForkJoinPool.commonPool-worker-1] ERROR n.d.jda.api.requests.RestAction - RestAction queue returned failure: [ErrorResponseException] 10062: Unknown interaction
-net.dv8tion.jda.api.exceptions.ContextException: null
-	at net.dv8tion.jda.api.exceptions.ContextException.here(ContextException.java:54)
-	at net.dv8tion.jda.api.requests.Request.<init>(Request.java:73)
-	at net.dv8tion.jda.internal.requests.RestActionImpl.queue(RestActionImpl.java:200)
-	at net.dv8tion.jda.internal.requests.restaction.interactions.InteractionCallbackImpl.queue(InteractionCallbackImpl.java:74)
-	at net.dv8tion.jda.api.requests.RestAction.queue(RestAction.java:572)
-	at net.dv8tion.jda.api.requests.RestAction.queue(RestAction.java:538)
-	at spigey.bot.Commands.RegisterCommand.slashCommand(RegisterCommand.java:32)
-	at spigey.bot.system.CommandHandler.onSlashCommand(CommandHandler.java:139)
-	at spigey.bot.DiscordBot.onSlashCommandInteraction(DiscordBot.java:352)
-	at net.dv8tion.jda.api.hooks.ListenerAdapter.onEvent(ListenerAdapter.java:403)
-	at net.dv8tion.jda.api.hooks.InterfacedEventManager.handle(InterfacedEventManager.java:96)
-	at net.dv8tion.jda.internal.hooks.EventManagerProxy.handleInternally(EventManagerProxy.java:88)
-	at net.dv8tion.jda.internal.hooks.EventManagerProxy.handle(EventManagerProxy.java:70)
-	at net.dv8tion.jda.internal.JDAImpl.handleEvent(JDAImpl.java:173)
-	at net.dv8tion.jda.internal.handle.InteractionCreateHandler.handleCommand(InteractionCreateHandler.java:110)
-	at net.dv8tion.jda.internal.handle.InteractionCreateHandler.handleInternally(InteractionCreateHandler.java:81)
-	at net.dv8tion.jda.internal.handle.SocketHandler.handle(SocketHandler.java:39)
-	at net.dv8tion.jda.internal.requests.WebSocketClient.onDispatch(WebSocketClient.java:961)
-	at net.dv8tion.jda.internal.requests.WebSocketClient.onEvent(WebSocketClient.java:847)
-	at net.dv8tion.jda.internal.requests.WebSocketClient.handleEvent(WebSocketClient.java:825)
-	at net.dv8tion.jda.internal.requests.WebSocketClient.onBinaryMessage(WebSocketClient.java:1000)
-	at com.neovisionaries.ws.client.ListenerManager.callOnBinaryMessage(ListenerManager.java:385)
-	at com.neovisionaries.ws.client.ReadingThread.callOnBinaryMessage(ReadingThread.java:276)
-	at com.neovisionaries.ws.client.ReadingThread.handleBinaryFrame(ReadingThread.java:996)
-	at com.neovisionaries.ws.client.ReadingThread.handleFrame(ReadingThread.java:755)
-	at com.neovisionaries.ws.client.ReadingThread.main(ReadingThread.java:108)
-	at com.neovisionaries.ws.client.ReadingThread.runMain(ReadingThread.java:64)
-	at com.neovisionaries.ws.client.WebSocketThread.run(WebSocketThread.java:45)
-2024-06-21 21:26:46 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 21:26:47 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 21:26:47 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 21:29:48 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 21:29:48 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 21:29:48 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 21:35:24 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 21:35:25 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 21:35:25 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 21:40:50 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 21:40:50 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 21:40:51 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 21:44:03 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 21:44:03 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 21:44:04 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 21:47:02 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 21:47:02 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 21:47:03 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 21:54:37 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 21:54:37 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 21:54:37 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 21:59:05 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 21:59:06 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 21:59:06 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 22:15:53 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 22:15:53 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 22:15:54 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 22:26:28 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-21 22:26:28 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 22:26:28 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-21 23:35:35 [JDA MainWS-ReadThread] WARN  n.d.j.i.requests.WebSocketClient - Got disconnected from WebSocket (Code 1000). Appending to reconnect queue
-2024-06-21 23:35:37 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-21 23:35:37 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished (Re)Loading!
+2024-06-22 00:13:04 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:13:05 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:13:05 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:17:30 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:17:30 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:17:30 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:18:18 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:18:18 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:18:18 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:19:12 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:19:12 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:19:12 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:25:13 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:25:14 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:25:14 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:29:47 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:29:48 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:29:48 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:30:56 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:30:57 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:30:57 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:33:37 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:33:37 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:33:37 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2024-06-22 00:49:01 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2024-06-22 00:49:01 [JDA MainWS-ReadThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2024-06-22 00:49:01 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
