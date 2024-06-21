@@ -1,308 +1,262 @@
 package spigey.bot.system;
-
+import com.google.api.core.ApiFuture;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.*;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import spigey.bot.DiscordBot;
-
-import java.io.FileReader;
-import java.io.FileWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.io.InputStream;
+import java.util.*;
 
 import static spigey.bot.DiscordBot.jda;
-import static spigey.bot.system.util.log;
 
 public class db {
-    private static String defaultValue = "temp";
-    public static final String FILE_PATH = Objects.equals(DiscordBot.config.get("DATABASE").toString(), "MAIN") ? DiscordBot.config.get("DATABASE_MAIN").toString() : DiscordBot.config.get("DATABASE_TEST").toString();
+    private static Firestore db;
+    private static final Logger logger = LoggerFactory.getLogger(db.class);
+    private static final Map<String, String> config = Map.of(
+            "Collection", "data",
+            "DefaultValue", "0"
+    );
 
-    public static void write(String user, String key, String value) throws IOException, ParseException {
-        try(RandomAccessFile file = new RandomAccessFile(FILE_PATH, "r")) {
-            FileChannel channel = file.getChannel();
-            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
+    /**
+     * Initializes the Firestore Database.
+     *
+     * @param ProjectID The project ID of the Firestore project.
+     * @throws IOException If there's an error initializing the database.
+     */
+    public static void init(String ProjectID) throws IOException {
+        InputStream serviceAccount = db.class.getClassLoader().getResourceAsStream("account.json");
+        db = FirestoreOptions.getDefaultInstance().toBuilder()
+                .setProjectId(ProjectID)
+                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                .build().getService();
+        logger.info("Initialized Firestore Database");
+    }
 
-            JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
-            JSONObject userObjectToUpdate = null;
-            for (Object o : userData) {
-                if (((JSONObject) o).containsKey(key)) {
-                    userObjectToUpdate = (JSONObject) o;
-                    break;
-                }
-            }
-
-            if (userObjectToUpdate != null) {
-                userObjectToUpdate.put(key, value);
-            } else {
-                userData.add(new JSONObject() {{
-                    put(key, value);
-                }});
-            }
-
-            existingData.put(user, userData);
-
-            try (FileWriter database = new FileWriter(FILE_PATH)) {
-                database.write(existingData.toJSONString());
-            }
+    /**
+     * Writes a key-value pair to a Firestore document.
+     *
+     * @param User   The document ID (user identifier).
+     * @param Key    The key to store the value under.
+     * @param Value  The value to store.
+     */
+    public static void write(String User, String Key, String Value){
+        try{
+            db.collection(config.get("Collection")).document(User).update(Key, Value).get();
+        }catch (Exception e){
+            logger.error("Failed to write to Firestore with error: {}", sys.getStackTrace(e));
         }
     }
 
-    public static String read(String user, String key) throws IOException, ParseException {
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-        JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
-        for (Object obj : userData) {
-            JSONObject userObject = (JSONObject) obj;
-            if (userObject.containsKey(key)) {
-                return (String) userObject.get(key);
-            }
+    /**
+     * Reads a value from a Firestore document, with a default value if not found.
+     *
+     * @param User         The document ID (user identifier).
+     * @param Key          The key to retrieve the value from.
+     * @param DefaultValue The default value to return if the key is not found or an error occurs.
+     * @return The value associated with the key, or the default value if not found.
+     */
+    public static String read(String User, String Key, String DefaultValue){
+        try{
+            DocumentSnapshot document = db.collection(config.get("Collection")).document(User).get().get();
+            if(document.exists() && document.contains(Key)) return document.getString(Key);
+        } catch (Exception e) {
+            logger.error("Failed to read from Firestore with error: {}", sys.getStackTrace(e));
         }
-        return defaultValue;
+        return DefaultValue;
     }
 
-    public static String read(String user, String key, String def) {
-        try {
-            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-            JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
-            for (Object obj : userData) {
-                JSONObject userObject = (JSONObject) obj;
-                if (userObject.containsKey(key)) {
-                    return (String) userObject.get(key);
-                }
-            }
-        }catch (Exception L){/**/}
-        return def;
+    /**
+     * Reads a value from a Firestore document.
+     *
+     * @param User The document ID (user identifier).
+     * @param Key  The key to retrieve the value from.
+     * @return The value associated with the key, or the default value if not found.
+     */
+    public static String read(String User, String Key){
+        return read(User, Key, config.get("DefaultValue"));
     }
 
-    public static void setDefaultValue(String val) {
-        defaultValue = val;
-    }
-
-    public static String getDefaultValue() {
-        return defaultValue;
-    }
-
-    public static void add(String user, String key, int value){
-        try {
-            if (Objects.equals(read(user, key), getDefaultValue())) {
-                log("Adding key " + key + " to user " + user);
-                write(user, key, String.valueOf(value));
-                return;
-            }
-            int existingValue = (read(user, key) != null) ? Integer.parseInt(read(user, key)) : 0;
-            write(user, key, String.valueOf(existingValue + value));
-        }catch (Exception L){sys.errInfo(L);}
-    }
-
-    public static JSONArray getArray(String array) throws IOException, ParseException {
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-        return (JSONArray) existingData.get(array);
-    }
-
-    public static void remove(String user, String key){
-        try {
-            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-
-            JSONArray userData = (JSONArray) existingData.getOrDefault(user, new JSONArray());
-            JSONObject userObjectToUpdate = null;
-            for (Object o : userData) {
-                if (((JSONObject) o).containsKey(key)) {
-                    userObjectToUpdate = (JSONObject) o;
-                    break;
-                }
-            }
-
-            if (userObjectToUpdate != null) {
-                userObjectToUpdate.remove(key);
-                if (userObjectToUpdate.isEmpty()) {
-                    userData.remove(userObjectToUpdate);
-                }
-            } else {
-                // Key not found, nothing to remove
-                return;
-            }
-
-            if (userData.isEmpty()) {
-                existingData.remove(user);
-            } else {
-                existingData.put(user, userData);
-            }
-
-            try (FileWriter database = new FileWriter(FILE_PATH)) {
-                database.write(existingData.toJSONString());
-            }
-        } catch(Exception L){
-            sys.errInfo(L);
+    /**
+     * Adds a numeric value to an existing key in a Firestore document, or creates the key with the value if it doesn't exist.
+     *
+     * @param User  The document ID (user identifier).
+     * @param Key   The key to add the value to.
+     * @param Value The numeric value to add.
+     */
+    public static void add(String User, String Key, Object Value){
+        try{
+            DocumentReference doc = db.collection(config.get("Collection")).document(User);
+            int finalValue = Integer.parseInt(Value.toString());
+            db.runTransaction(transaction -> {
+                DocumentSnapshot snapshot = transaction.get(doc).get();
+                transaction.update(doc, Key, snapshot.contains(Key) ? snapshot.getLong(Key).intValue() + finalValue : finalValue);
+                return null;
+            }).get();
+        } catch(Exception e){
+            logger.error("Failed to add to Firestore with error: {}", sys.getStackTrace(e));
         }
     }
-    public static void remove(String user){
+
+    /**
+     * Removes a specific key-value pair from a Firestore document.
+     *
+     * @param User The document ID (user identifier).
+     * @param Key  The key to remove.
+     */
+    public static void remove(String User, String Key){
+        HashMap <String, Object> updates = new HashMap<>();
+        updates.put(Key, FieldValue.delete());
+        db.collection(config.get("Collection")).document(User).update(updates);
+    }
+
+    /**
+     * Removes an entire document from the Firestore collection.
+     *
+     * @param User The document ID (user identifier) to remove.
+     */
+    public static void remove(String User){
+        db.collection(config.get("Collection")).document(User).delete();
+    }
+
+    /**
+     * Retrieves an array from a Firestore document and converts it to a JSONArray.
+     *
+     * @param Array The ID of the document containing the array.
+     * @return A JSONArray representing the data in the document, or an empty JSONArray if not found or an error occurs.
+     */
+    public static JSONArray getArray(String Array) {
+        JSONArray result = new JSONArray();
         try {
-            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-            if (existingData.containsKey(user)) {
-                existingData.remove(user);
-
-                try (FileWriter database = new FileWriter(FILE_PATH)) {
-                    database.write(existingData.toJSONString());
+            DocumentSnapshot document = db.collection(config.get("Collection")).document(Array).get().get();
+            if (document.exists()) {
+                for (Map.Entry<String, Object> entry : document.getData().entrySet()) {
+                    JSONObject obj = new JSONObject();
+                    obj.put(entry.getKey(), entry.getValue());
+                    result.add(obj);
                 }
             }
-        }catch(Exception L){/**/}
+        } catch (Exception e) {
+            logger.error("Failed to get array from Firestore with error: {}", sys.getStackTrace(e));
+        }
+        return result;
     }
 
-    public static String get() throws Exception {
-        return Files.readString(Paths.get(FILE_PATH));
-    }
-
-    public static String idFromToken(String token) throws IOException, ParseException {
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-        for (Object userIdObj : existingData.keySet()) {
-            String userId = (String) userIdObj;
-            JSONArray userData = (JSONArray) existingData.get(userId);
-            for (Object obj : userData) {
-                JSONObject userObject = (JSONObject) obj;
-                if (userObject.containsKey("token") && userObject.get("token").equals(token)) {
-                    return userId;
-                }
+    /**
+     * Calculates the total number of keys across all documents in the collection.
+     *
+     * @return The total number of keys.
+     */
+    public static int keySize(){
+        int count = 0;
+        try{
+            for(DocumentReference doc : db.collection(config.get("Collection")).listDocuments()){
+                DocumentSnapshot document = doc.get().get();
+                if(!document.exists()) continue;
+                count += document.getData().size();
             }
+        }catch (Exception e){
+            logger.error("Failed to retrieve key size from Firestore with error: {}", sys.getStackTrace(e));
+        }
+        return count;
+    }
+
+    /**
+     * Retrieves the user ID associated with a given token.
+     *
+     * @param Token The token to search for.
+     * @return The user ID associated with the token, or null if not found.
+     */
+    public static String idFromToken(String Token){
+        try{
+            for(DocumentReference doc : db.collection(config.get("Collection")).listDocuments()){
+                DocumentSnapshot document = doc.get().get();
+                if(!(document.exists() && document.contains("token") && document.getString("token").equals(Token))) continue;
+                return document.getId();
+            }
+        } catch(Exception e){
+            logger.error("Failed to retrieve ID from Token from Firestore with error: {}", sys.getStackTrace(e));
         }
         return null;
     }
 
-    public static int keySize() throws IOException, ParseException {
-        JSONParser parser = new JSONParser();
-        JSONObject existingData = (JSONObject) parser.parse(new FileReader(FILE_PATH));
-        return countKeysRecursive(existingData);
-    }
+    /**
+     * Stores post metadata for a specific post ID, including the associated message IDs.
+     *
+     * @param PostID     The unique identifier for the post.
+     * @param MessageID  The unique identifier for the message associated with the post.
+     */
+    public static void postMeta(String PostID, String MessageID){
+        try{
+            DocumentReference doc = db.collection(config.get("Collection")).document("posts");
+            db.runTransaction(transaction -> {
+                DocumentSnapshot snapshot = transaction.get(doc).get();
 
-    private static int countKeysRecursive(JSONObject obj) {
-        int count = obj.size();  // Count keys at the current level
-
-        for (Object value : obj.values()) {
-            if (value instanceof JSONArray) {
-                JSONArray jsonArray = (JSONArray) value;
-                for (Object item : jsonArray) {
-                    if (item instanceof JSONObject) {
-                        count += countKeysRecursive((JSONObject) item);  // Recurse into objects within the array
-                    }
-                }
-            } else if (value instanceof JSONObject) {
-                count += countKeysRecursive((JSONObject) value); // Recurse into nested objects
-            }
+                Map<String, Object> data = snapshot.exists() ? snapshot.getData() : new HashMap<>();
+                List<String> msgIDs = (List<String>) data.getOrDefault(PostID, new ArrayList<>());
+                msgIDs.add(MessageID);
+                data.put(PostID, msgIDs);
+                transaction.set(doc, data, SetOptions.merge());
+                return null;
+            }).get();
+        } catch(Exception e){
+            logger.error("Failed to update Post Metadata from Firestore with error: {}", sys.getStackTrace(e));
         }
-        return count;
     }
-    public static int clean() {
+
+    /**
+     * Deletes a post with the given PostID from Firestore and updates the associated Discord messages.
+     *
+     * @param PostID The unique identifier for the post to delete.
+     */
+    public static void deletePost(String PostID){
         try {
-            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-            int rem = cleanJSONObject(existingData); // No initial rm needed
-
-            try (FileWriter database = new FileWriter(FILE_PATH)) {
-                database.write(existingData.toJSONString());
+            DocumentReference doc = db.collection(config.get("Collection")).document("posts");
+            DocumentSnapshot document = doc.get().get();
+            if(!document.exists() || !document.contains(PostID)){
+                logger.warn("Post with ID {} not found in Firestore", PostID);
+                return;
             }
-
-            return rem;
-        } catch (Exception L) {
-            sys.errInfo(L);
-            return 0; // Return 0 in case of error
+            List<String> msgIDs = (List<String>) document.getData().get(PostID);
+            if(msgIDs == null) return;
+            for(String msgID : msgIDs){
+                String[] split = msgID.split("-");
+                Message message = jda.getGuildById(split[0]).getTextChannelById(split[1]).retrieveMessageById(split[2]).complete();
+                if(message == null) continue;
+                message.editMessageEmbeds(new EmbedBuilder(message.getEmbeds().get(0))
+                        .setDescription("*This post has been removed by a " + jda.getSelfUser().getName() + " moderator.*").build()).queue();
+                message.delete().queue();
+                message.editMessageComponents(Collections.emptyList()).queue();
+            }
+            doc.update(PostID, FieldValue.delete()).get();
+        } catch(Exception e){
+            logger.error("Failed to delete Post from Firestore with error: {}", sys.getStackTrace(e));
         }
     }
 
-    private static int cleanJSONObject(JSONObject obj) {
-        int removedCount = 0;
-
-        for (Iterator<String> iterator = obj.keySet().iterator(); iterator.hasNext();) {
-            String key = iterator.next();
-            Object value = obj.get(key);
-
-            if (value instanceof String) {
-                String strValue = (String) value;
-                if (strValue.trim().isEmpty()) {
-                    iterator.remove();
-                    removedCount++; // Increment counter for removed empty string
-                }
-            } else if (value instanceof JSONArray) {
-                JSONArray array = (JSONArray) value;
-                for (Iterator<Object> arrayIterator = array.iterator(); arrayIterator.hasNext();) {
-                    Object elem = arrayIterator.next();
-                    if (elem instanceof JSONObject) {
-                        removedCount += cleanJSONObject((JSONObject) elem); // Accumulate count from nested object
-                        if (((JSONObject) elem).isEmpty()) {
-                            arrayIterator.remove();
-                            removedCount++; // Increment counter for removed nested empty object
-                        }
-                    } else if (elem instanceof JSONArray && ((JSONArray) elem).isEmpty()) {
-                        arrayIterator.remove();
-                        removedCount++; // Increment counter for removed nested empty array
-                    }
-                }
-                if (array.isEmpty()) {
-                    iterator.remove();
-                    removedCount++; // Increment counter for removed empty array
-                }
-            } else if (value instanceof JSONObject) {
-                removedCount += cleanJSONObject((JSONObject) value); // Accumulate count from nested object
-                if (((JSONObject) value).isEmpty()) {
-                    iterator.remove();
-                    removedCount++; // Increment counter for removed nested empty object
-                }
+    /**
+     * Retrieves the PostID associated with a given MessageID.
+     *
+     * @param MessageID The unique identifier of the message.
+     * @return The PostID associated with the message, or null if not found.
+     */
+    public static String postID(String MessageID){
+        try {
+            DocumentSnapshot document = db.collection(config.get("Collection")).document("posts").get().get();
+            if (!document.exists()) return null;
+            for (Map.Entry<String, Object> entry : document.getData().entrySet()) {
+                if (!(entry.getValue() instanceof List<?> msgIDs && msgIDs.contains(MessageID))) continue;
+                return entry.getKey();
             }
+        } catch(Exception e){
+            logger.error("Failed to retrieve Post ID from Firestore with error: {}", sys.getStackTrace(e));
         }
-
-        return removedCount; // Return the count of removed elements
-    }
-
-    public static void postMeta(String postID, String messageId) throws Exception {
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-        JSONObject postsData = (JSONObject) existingData.getOrDefault("posts", new JSONObject());
-
-        JSONObject postInfo = (JSONObject) postsData.getOrDefault(postID, new JSONObject());
-        JSONArray messageIds = (JSONArray) postInfo.getOrDefault("messageIds", new JSONArray());
-        messageIds.add(messageId);
-        postInfo.put("messageIds", messageIds);
-
-        postsData.put(postID, postInfo);
-        existingData.put("posts", postsData);
-
-        try (FileWriter database = new FileWriter(FILE_PATH)) {
-            database.write(existingData.toJSONString());
-        }
-    }
-
-    public static void deletePost(String postId) throws IOException, ParseException {
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader(FILE_PATH));
-        JSONObject postsData = (JSONObject) existingData.getOrDefault("posts", new JSONObject());
-
-        if (postsData.containsKey(postId)) {
-            JSONObject postInfo = (JSONObject) postsData.get(postId);
-            JSONArray messageIds = (JSONArray) postInfo.get("messageIds");
-
-            for (Object messageIdObj : messageIds) {
-                String[] split = ((String) messageIdObj).split("-");
-                jda.getGuildById(split[0]).getTextChannelById(db.read("channels", split[0])).retrieveMessageById(split[1]).complete().editMessageEmbeds(new EmbedBuilder(jda.getGuildById(split[0]).getTextChannelById(db.read("channels", split[0])).retrieveMessageById(split[1]).complete().getEmbeds().get(0)).setDescription("*This post has been removed by a " + jda.getSelfUser().getName() + " moderator.*").build()).queue();
-                jda.getGuildById(split[0]).getTextChannelById(db.read("channels", split[0])).retrieveMessageById(split[1]).complete().editMessageComponents(Collections.emptyList()).queue();
-            }
-
-            postsData.remove(postId);
-            existingData.put("posts", postsData);
-
-            try (FileWriter database = new FileWriter(FILE_PATH)) {
-                database.write(existingData.toJSONString());
-            }
-        }
-    }
-
-    public static String postId(String messageId) throws IOException, ParseException {
-        JSONObject postsData = (JSONObject) ((JSONObject) new JSONParser().parse(new FileReader(FILE_PATH))).getOrDefault("posts", new JSONObject());
-        for (Object Id : postsData.keySet())
-            if (((JSONArray) ((JSONObject) postsData.get(Id)).get("messageIds")).stream().anyMatch(msgId -> ((String) msgId).split("-")[1].equals(messageId))) return (String) Id;
         return null;
     }
 }

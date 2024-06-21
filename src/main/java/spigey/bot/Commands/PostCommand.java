@@ -34,7 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static spigey.bot.DiscordBot.badWords;
+// import static spigey.bot.DiscordBot.badWords;
 import static spigey.bot.DiscordBot.jda;
 import static spigey.bot.system.sys.errInfo;
 
@@ -146,12 +146,7 @@ public class PostCommand implements Command {
                     catch(ErrorResponseException L){dkjdfh.appendReplacement(sb, "@unkno...");}
                 }
                 dkjdfh.appendTail(sb);
-                String reustl = Arrays.stream(sb.toString().split("\\s+"))
-                        .map(word -> badWords.stream().anyMatch(bad -> word.toLowerCase().contains(bad))
-                                ? word.replaceAll(".", "?")
-                                : word)
-                        .collect(Collectors.joining(" "));
-                db.write(username, "posts", sys.trimMarkdown("\n[" + sys.trim(rmMarkdown(reustl),23) +"](" + url.get() + ")" + db.read(username, "posts", ""), 10));
+                db.write(username, "posts", sys.trimMarkdown("\n[" + sys.trim(rmMarkdown(filter.words(sb.toString(), "?")),23) +"](" + url.get() + ")" + db.read(username, "posts", ""), 10));
             } catch (Exception e) {/**/}
         });
         if(!Objects.equals(db.read(username, "verified"), "0")) return 0;
@@ -178,7 +173,6 @@ public class PostCommand implements Command {
         }
         matcher.appendTail(output);
         String txt = output.toString();
-        String bk = "\\";
 
         txt = Pattern.compile("discord(?:.gg|.com/invite)/\\S+\\)?").matcher(txt).replaceAll("discord.gg/VX2BJ7r9Xq");
 
@@ -186,11 +180,12 @@ public class PostCommand implements Command {
             txt = txt.replaceAll("(?i)" + Pattern.quote(badWord), badWord.replaceAll(".", "#"));
         } */
 
-        txt = Arrays.stream(txt.split("\\s+"))
+        /* txt = Arrays.stream(txt.split("\\s+"))
                 .map(word -> badWords.stream().anyMatch(bad -> word.toLowerCase().contains(bad))
                         ? word.replaceAll(".", "\\\\*")
                         : word)
-                .collect(Collectors.joining(" "));
+                .collect(Collectors.joining(" ")); */
+        txt = filter.words(txt, "\\\\\\\\*");
 
         return txt.replaceAll("\\\\n", "\n");
     }

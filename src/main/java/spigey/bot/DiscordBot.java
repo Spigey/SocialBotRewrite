@@ -69,7 +69,6 @@ public class DiscordBot extends ListenerAdapter {
             .addEventListeners(new DiscordBot())
             .setActivity(Activity.watching("your posts"))
             .build();
-    public static List<String> badWords = new ArrayList<>();
     public static TextChannel console = null;
     public static JSONObject config;
 
@@ -92,7 +91,8 @@ public class DiscordBot extends ListenerAdapter {
         try {
             console = jda.getGuildById("1219338270773874729").getTextChannelById("1247203483652849726");
         }catch(Exception L){/**/}
-        db.setDefaultValue((String) config.get("DEFAULT_VALUE"));
+        // db.setDefaultValue((String) config.get("DEFAULT_VALUE"));
+        db.init("social-bot-database");
         prefix = (String) config.get("PREFIX");
         log("  _____  _                       _   ____        _   \n |  __ \\(_)                     | | |  _ \\      | |  \n | |  | |_ ___  ___ ___  _ __ __| | | |_) | ___ | |_ \n | |  | | / __|/ __/ _ \\| '__/ _` | |  _ < / _ \\| __|\n | |__| | \\__ \\ (_| (_) | | | (_| | | |_) | (_) | |_ \n |_____/|_|___/\\___\\___/|_|  \\__,_| |____/ \\___/ \\__|\n                                                     ");
         commandHandler = new CommandHandler();
@@ -139,14 +139,15 @@ public class DiscordBot extends ListenerAdapter {
                 Commands.slash("report", "Report a bug or a user.")
                         .addOption(OptionType.STRING, "text", "User or bug.", true)
         ).queue();
-        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/spigey/bot/system/badwords.txt"))) {
+        /* try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/spigey/bot/system/badwords.txt"))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 badWords.add(line.trim());
             }
         } catch (Exception e) {
             errInfo(e);
-        }
+        } */
+        filter.loadConfig();
     }
 
 
@@ -155,7 +156,6 @@ public class DiscordBot extends ListenerAdapter {
         System.setOut(new DiscordPrintStream(System.out, console));
         System.setErr(new DiscordPrintStream(System.err , console));
         sys.debug("Logged in as " + event.getJDA().getSelfUser().getName() + "!");
-        sys.debug(event.getGuildTotalCount());
     }
 
 
@@ -194,12 +194,12 @@ public class DiscordBot extends ListenerAdapter {
                         } else if(args[1].equals("remove")) {
                             db.remove(args[2], args[3]);
                             log = "Removed " + args[3] + " for user " + user + ".";
-                        } else if(args[1].equals("clean")){
+                        } /* else if(args[1].equals("clean")){
                             log = "Successfully cleaned " + db.clean() + " empty database entries!";
                         } else if(args[1].equals("retrieve")){
                             event.getChannel().sendMessage("").addFiles(FileUpload.fromData(new ByteArrayInputStream(sys.encrypt(db.get(), env.ENCRYPTION_KEY).getBytes(StandardCharsets.UTF_8)), "database.json")).queue();
                             log = "";
-                        } else if(args[1].equals("delete")){
+                        } */ else if(args[1].equals("delete")){
                             db.deletePost(args[2]);
                             log = "ok doen";
                         }

@@ -97,6 +97,15 @@ public class sys {
         error(err);
     }
 
+    public static String getStackTrace(Exception L){
+        StringBuilder err = new StringBuilder(L + "\n   ");
+        for(int i = 0; i < L.getStackTrace().length - 1; i++){
+            err.append(L.getStackTrace()[i]).append("\n   ");
+        }
+        err.append(L.getStackTrace()[L.getStackTrace().length - 1]);
+        return err.toString();
+    }
+
     public static long getTime() {
         return System.currentTimeMillis();
     }
@@ -120,7 +129,7 @@ public class sys {
         System.out.print(message);
     }
     public static void debug(Object content) {
-        ln("\u001B[42;30m[DEBUG]: " + content + " \u001B[49m\u001B[0m");
+        ln("\u001B[42;30m[DEBUG]: " + content + " \u001B[49m\u001B[0m" + ANSI_RESET);
         try {
             DiscordBot.console.sendMessage("```[DEBUG]: " + content + "```").queue();
         }catch (Exception L){/**/}

@@ -89,11 +89,7 @@ public class ManageCommand implements Command {
                     }
                 }
                 dkjdfh.appendTail(sb);
-                String reustl = Arrays.stream(sb.toString().split("\\s+"))
-                        .map(word -> badWords.stream().anyMatch(bad -> word.toLowerCase().contains(bad))
-                                ? word.replaceAll(".", "?")
-                                : word)
-                        .collect(Collectors.joining(" "));
+                String reustl = filter.words(sb.toString(), "?");
                 db.write(username, "posts", Pattern.compile("\\[" + Pattern.quote(reustl) + "]\\[(.*?)]").matcher(db.read(username, "posts")).replaceAll(""));
             }catch(Exception L){sys.errInfo(L);}
             return;

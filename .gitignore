@@ -37,3 +37,6 @@ spigey/bot/system/database/database.*
 bot/system/database/database.*
 system/database/database.*
 database/database.*
+account.*
+/account.*
+src/main/resources/account.json

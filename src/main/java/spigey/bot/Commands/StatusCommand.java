@@ -63,40 +63,34 @@ public class StatusCommand implements Command {
                     .sum();
         }
         int finalTotalUserCount = totalUserCount;
-        util.userExecF("*").thenAccept(users -> {
-            for (User user : users) {
-                userCount.getAndIncrement();
-            }
-        }).thenRun(() -> {
-            String feeling;
-            if (gatewayPing > 500 || restPing > 1000 || memoryUsage > 75 || cpuLoad > 7.5) {
-                status.set(EmbedColor.RED);
-                feeling = "HIGH RESOURCE USAGE";
-            } else if (gatewayPing > 250 || restPing > 500 || memoryUsage > 50 || cpuLoad > 5) {
-                status.set(EmbedColor.YELLOW);
-                feeling = "MODERATE";
-            } else {
-                status.set(EmbedColor.GREEN);
-                feeling = "OPERATIONAL";
-            }
-            int serverCount = event.getJDA().getGuilds().size();
-            EmbedBuilder embed = null;
-            try {
-                embed = new EmbedBuilder()
-                        .setTitle(event.getJDA().getSelfUser().getName() + " Status")
-                        .addField(":computer: **Ram Usage**", String.format("```%s MB```\n\n:ping_pong: **Gateway Ping**\n```%s MS```\n\n:ping_pong: **Rest Ping**\n```%s MS```\n\n:rocket: **Server Count**\n```%s```\n\n:bust_in_silhouette: **Registered Users**\n```%s```", memoryUsage, gatewayPing, restPing, serverCount, userCount), true)
-                        .addField(":fire: **CPU Load**", String.format("```%.2f%%```\n\n:desktop: **Operating System**\n```%s```\n\n:robot: **JDA Version**\n```%s```\n\n:timer: **Uptime**\n```%s```\n\n:busts_in_silhouette: **Cached Users**\n```~%s```", cpuLoad, osName, jdaVersion, uptime, finalTotalUserCount), true)
-                        .addField(":thread: **Thread Count**", String.format("```%s```\n\n:robot: **Shard Count**\n```%s```\n\n:robot: **Current Shard**\n```%s```\n\n:chart_with_upwards_trend: **Status**\n```%s```\n\n:cd: **Database Size**\n```%s Keys (%.1f KB)```", threadCount, shardCount, currentShard + 1, feeling, db.keySize(), sys.fileSize(db.FILE_PATH) * 1024), true)
-                        .addField(":page_facing_up: **Lines of Code**", String.format("```%s```", lines), true)
-                        .addField(":globe_with_meridians: **Commands Processed**", String.format("```%s```", commandsProcessed), true)
-                        .addField(":speech_balloon: **Messages Processed**", String.format("```%s```", messagesProcessed), true)
-                        .addField(":incoming_envelope: **Bytes sent/received**", String.format("```%s/%s```", bytesSent, bytesReceived), true)
-                        .addField(":page_facing_up: **Code Characters**", String.format("```%s```", chars), true)
-                        .setColor(status.get());
-            } catch (Exception L){/**/}
-            assert embed != null;
-            event.getHook().sendMessage("").addEmbeds(embed.build()).queue();
-        });
+        String feeling;
+        if (gatewayPing > 500 || restPing > 1000 || memoryUsage > 75 || cpuLoad > 7.5) {
+            status.set(EmbedColor.RED);
+            feeling = "HIGH RESOURCE USAGE";
+        } else if (gatewayPing > 250 || restPing > 500 || memoryUsage > 50 || cpuLoad > 5) {
+            status.set(EmbedColor.YELLOW);
+            feeling = "MODERATE";
+        } else {
+            status.set(EmbedColor.GREEN);
+            feeling = "OPERATIONAL";
+        }
+        int serverCount = event.getJDA().getGuilds().size();
+        EmbedBuilder embed = null;
+        try {
+            embed = new EmbedBuilder()
+                    .setTitle(event.getJDA().getSelfUser().getName() + " Status")
+                    .addField(":computer: **Ram Usage**", String.format("```%s MB```\n\n:ping_pong: **Gateway Ping**\n```%s MS```\n\n:ping_pong: **Rest Ping**\n```%s MS```\n\n:rocket: **Server Count**\n```%s```\n\n:computer: **OS Arch**\n```%s```", memoryUsage, gatewayPing, restPing, serverCount, osArch), true)
+                    .addField(":fire: **CPU Load**", String.format("```%.2f%%```\n\n:desktop: **Operating System**\n```%s```\n\n:robot: **JDA Version**\n```%s```\n\n:timer: **Uptime**\n```%s```\n\n:busts_in_silhouette: **Cached Users**\n```~%s```", cpuLoad, osName, jdaVersion, uptime, finalTotalUserCount), true)
+                    .addField(":thread: **Thread Count**", String.format("```%s```\n\n:robot: **Shard Count**\n```%s```\n\n:robot: **Current Shard**\n```%s```\n\n:chart_with_upwards_trend: **Status**\n```%s```\n\n:cd: **Database Size**\n```%s Keys (%.1f KB)```", threadCount, shardCount, currentShard + 1, feeling, db.keySize(), "???"), true)
+                    .addField(":page_facing_up: **Lines of Code**", String.format("```%s```", lines), true)
+                    .addField(":globe_with_meridians: **Commands Processed**", String.format("```%s```", commandsProcessed), true)
+                    .addField(":speech_balloon: **Messages Processed**", String.format("```%s```", messagesProcessed), true)
+                    .addField(":incoming_envelope: **Bytes sent/received**", String.format("```%s/%s```", bytesSent, bytesReceived), true)
+                    .addField(":page_facing_up: **Code Characters**", String.format("```%s```", chars), true)
+                    .setColor(status.get());
+        } catch (Exception L){/**/}
+        assert embed != null;
+        event.getHook().sendMessage("").addEmbeds(embed.build()).queue();
         return 1;
     }
 }

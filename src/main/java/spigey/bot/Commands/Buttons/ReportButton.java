@@ -41,6 +41,6 @@ public class ReportButton implements Command {
         }
         event.getMessage().editMessageEmbeds(content, reportedEmbed.build()).queue();
         TextChannel channel = event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246799983848722543");
-        channel.sendMessage(db.postId(event.getMessage().getId())).addEmbeds(embed.build(), content).queue();
+        channel.sendMessage(db.postID(event.getMessage().getId())).addEmbeds(embed.build(), content).queue();
     }
 }

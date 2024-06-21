@@ -118,26 +118,25 @@ public class util {
         }
         return out;
     }
+
     public static boolean notif(String username, MessageEmbed embed) throws Exception {
         boolean found = false;
         try {
             JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
             for (Object userId : existingData.keySet()) {
-                JSONArray userData = (JSONArray) existingData.get(userId);
+                if(!(existingData.get(userId) instanceof JSONArray userData)) continue;
                 for (Object obj : userData) {
-                    JSONObject userObject = (JSONObject) obj;
-                    if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
-                        User user = jda.retrieveUserById((String) userId).complete();
-                        if (user != null) {
-                            found = true;
-                            user.openPrivateChannel().queue(privateChannel -> {
-                                privateChannel.sendMessage("").addEmbeds(embed).queue();
-                            });
-                        }
-                    }
+                    if (!(obj instanceof JSONObject userObject)) continue;
+                    if (!(userObject.containsKey("account") && userObject.get("account").equals(username))) continue;
+                    User user = jda.retrieveUserById((String) userId).complete();
+                    if (user == null) continue;
+                    found = true;
+                    user.openPrivateChannel().queue(privateChannel -> {
+                        privateChannel.sendMessage("").addEmbeds(embed).queue();
+                    });
                 }
             }
-        }catch(Exception L){
+        } catch (Exception L) {
             sys.errInfo(L);
             return false;
         }
@@ -196,7 +195,7 @@ public class util {
                                 try {
                                     retrievedUsers.add(userFuture.join());
                                 } catch (Exception e) {
-                                    // Handle individual exceptions if needed
+                                    sys.errInfo(e);
                                 }
                             }
                             return retrievedUsers;
@@ -210,7 +209,9 @@ public class util {
             } catch (Exception e) {
                 future.completeExceptionally(e);
             }
+            sys.warn("fortnet");
         });
+        sys.warn("work!!");
 
         return future;
     }
