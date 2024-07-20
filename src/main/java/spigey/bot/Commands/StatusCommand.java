@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static spigey.bot.DiscordBot.log;
+
 
 @CommandInfo(
         slashCommand = "status",
@@ -79,9 +81,9 @@ public class StatusCommand implements Command {
         try {
             embed = new EmbedBuilder()
                     .setTitle(event.getJDA().getSelfUser().getName() + " Status")
-                    .addField(":computer: **Ram Usage**", String.format("```%s MB```\n\n:ping_pong: **Gateway Ping**\n```%s MS```\n\n:ping_pong: **Rest Ping**\n```%s MS```\n\n:rocket: **Server Count**\n```%s```\n\n:computer: **OS Arch**\n```%s```", memoryUsage, gatewayPing, restPing, serverCount, osArch), true)
-                    .addField(":fire: **CPU Load**", String.format("```%.2f%%```\n\n:desktop: **Operating System**\n```%s```\n\n:robot: **JDA Version**\n```%s```\n\n:timer: **Uptime**\n```%s```\n\n:busts_in_silhouette: **Cached Users**\n```~%s```", cpuLoad, osName, jdaVersion, uptime, finalTotalUserCount), true)
-                    .addField(":thread: **Thread Count**", String.format("```%s```\n\n:robot: **Shard Count**\n```%s```\n\n:robot: **Current Shard**\n```%s```\n\n:chart_with_upwards_trend: **Status**\n```%s```\n\n:cd: **Database Size**\n```%s Keys (%s KB)```", threadCount, shardCount, currentShard + 1, feeling, db.keySize(), "???"), true)
+                    .addField(":computer: **Ram Usage**", String.format("```%s MB```\n\n:ping_pong: **Gateway Ping**\n```%s MS```\n\n:ping_pong: **Rest Ping**\n```%s MS```\n\n:rocket: **Server Count**\n```%s```", memoryUsage, gatewayPing, restPing, serverCount), true)
+                    .addField(":fire: **CPU Load**", String.format("```%.2f%%```\n\n:desktop: **Operating System**\n```%s```\n\n:robot: **JDA Version**\n```%s```\n\n:busts_in_silhouette: **Cached Users**\n```~%s```", cpuLoad, osName, jdaVersion, finalTotalUserCount), true)
+                    .addField(":thread: **Thread Count**", String.format("```%s```\n\n:timer: **Uptime**\n```%s```\n\n:chart_with_upwards_trend: **Status**\n```%s```\n\n:cd: **Database Size**\n```%s Keys (%s)```", threadCount, uptime, feeling, db.keySize(), db.fileSize("%.1f%s")), true)
                     .addField(":page_facing_up: **Lines of Code**", String.format("```%s```", lines), true)
                     .addField(":globe_with_meridians: **Commands Processed**", String.format("```%s```", commandsProcessed), true)
                     .addField(":speech_balloon: **Messages Processed**", String.format("```%s```", messagesProcessed), true)
@@ -89,7 +91,7 @@ public class StatusCommand implements Command {
                     .addField(":page_facing_up: **Code Characters**", String.format("```%s```", chars), true)
                     .setColor(status.get());
         } catch (Exception L){
-            sys.errInfo(L);
+            log.error(sys.getStackTrace(L));
         }
         assert embed != null;
         event.getHook().sendMessage("").addEmbeds(embed.build()).queue();

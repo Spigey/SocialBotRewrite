@@ -8,6 +8,8 @@ import spigey.bot.system.*;
 
 import java.util.Objects;
 
+import static spigey.bot.DiscordBot.log;
+
 @CommandInfo(
         slashCommand = "login",
         description = "Login as any user with their username and password.",

@@ -20,6 +20,7 @@ public class NotificationsCommand implements Command {
         if(db.read(db.read(event.getUser().getId(), "account"), "notifications").equals("0")){event.reply("You currently do not have any new notifications.").setEphemeral(true).queue(); return 0;}
         String[] notifs = db.read(db.read(event.getUser().getId(), "account"), "notifications").replaceAll(",0", "").split(",");
         StringBuilder sb = new StringBuilder();
+        String username = db.read(event.getUser().getId(), "account");
         for(String notif : notifs){
             if(notif.split("-").length == 2){
                 switch (notif.split("-")[0]) {
@@ -29,10 +30,12 @@ public class NotificationsCommand implements Command {
                             sb.append("\n" + EmojiDB.mention + " **@").append(notif.split("-")[1]).append("** has mentioned you in one of their posts.");
                     case "accept" ->
                             sb.append("\n" + EmojiDB.add + " **@").append(notif.split("-")[1]).append("** has accepted your friend request!");
+                    case "post" ->
+                            sb.append("\n:speech_balloon: **@").append(notif.split("-")[1]).append("** has posted!");
                 }
             } else{
                 if(notif.equals("verified")){
-                    sb.append("\n" + EmojiDB.Verified + " You are now verified!");
+                    if(!db.read(username, "verified").equals("0")) sb.append("\n").append(db.read(username, "verified")).append(" You are now verified!");
                 } else if (notif.equals("post-removed")) {
                     sb.append("\n:octagonal_sign: One of your posts has been removed.");
                 }

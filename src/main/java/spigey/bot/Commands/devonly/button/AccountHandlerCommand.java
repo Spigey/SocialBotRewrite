@@ -16,7 +16,7 @@ public class AccountHandlerCommand implements Command {
         if (!event.getMember().getId().equals(BotOwner)) return;
         String username = event.getMessage().getEmbeds().get(0).getDescription().split("`")[1];
         String user = event.getMessage().getContentRaw();
-        sys.debug(util.userExec(username, UserN -> {
+        sys.debug(util.userExec(username, UserN -> { // TODO: fix this shit
             db.remove(UserN.getId(), "account");
             sys.debug("Removed key account for user " + jda.retrieveUserById(UserN.getId()).complete().getName());
         }));

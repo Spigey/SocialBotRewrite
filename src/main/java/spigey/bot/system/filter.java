@@ -46,6 +46,9 @@ public class filter {
                 words.put("nigger", new String[]{});
                 words.put("niggas", new String[]{});
                 words.put("niggers", new String[]{});
+                words.put("faggots", new String[]{});
+                words.put("fag", new String[]{});
+                words.put("hitler", new String[]{});
             // manual words end
             sys.debug("Loaded " + words.size() + " filter words");
         } catch (Exception e) {

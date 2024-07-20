@@ -33,6 +33,7 @@ dependencies {
     }
     implementation 'ch.qos.logback:logback-core:1.4.14'
     implementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
+    implementation 'com.clarifai:clarifai-grpc:10.5.2'
 }
 
 test {

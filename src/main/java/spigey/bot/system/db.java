@@ -11,15 +11,18 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.File;
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static spigey.bot.DiscordBot.jda;
 
+@SuppressWarnings("all")
 public class db {
     private static DB db;
     private static final Logger logger = LoggerFactory.getLogger(db.class);
     private static String def;
+    private static String path;
 
     private static final JSONParser parser = new JSONParser();
 
@@ -28,15 +31,16 @@ public class db {
      * It sets up the database options and logs whether the initialization was successful.
      *
      * @param DatabasePath The path to the database file.
-     * @param DefaultValue The default value to use when reading from the database.
+     * @param DefaultValue The default value to use when an element was not found while reading from the database.
      */
     public static void init(String DatabasePath, String DefaultValue) {
         try {
+            path = DatabasePath;
             Options options = new Options();
             options.createIfMissing(true);
             def = DefaultValue;
             db = factory.open(new File(DatabasePath), options);
-            logger.info("Initialized LevelDB Database");
+            logger.info("Initialized LevelDB Database at '{}' ({} keys, {})", DatabasePath, keySize(), fileSize("%.1f %s"));
         } catch (Exception e) {
             logger.error("Failed to initialize LevelDB Database: {}", sys.getStackTrace(e));
         }
@@ -45,11 +49,12 @@ public class db {
     /**
      * Retrieves a JSON document from the database by its ID.
      * If the document does not exist, it returns an empty JSON object.
+     * You will rarely need this.
      *
      * @param id The ID of the document to retrieve.
      * @return The JSON object retrieved from the database.
      */
-    private static JSONObject getDocument(String id) {
+    public static JSONObject getDocument(String id) {
         try {
             byte[] valueBytes = db.get(bytes(id));
             return (valueBytes != null) ? (JSONObject) parser.parse(asString(valueBytes)) : new JSONObject();
@@ -60,11 +65,12 @@ public class db {
 
     /**
      * Saves a JSON document to the database with the specified ID.
+     * You will rarely need this.
      *
      * @param id The ID to associate with the document.
      * @param data The JSON data to save.
      */
-    private static void saveDocument(String id, JSONObject data) {
+    public static void saveDocument(String id, JSONObject data) {
         try {
             db.put(bytes(id), bytes(data.toJSONString()));
         } catch (Exception e) {
@@ -101,9 +107,7 @@ public class db {
     public static String read(String User, String Key, String DefaultValue) {
         try {
             JSONObject document = getDocument(User);
-            if(document.containsKey(Key)) {
-                return (String) document.get(Key);
-            }
+            if(document.containsKey(Key)) return document.get(Key).toString();
         } catch (Exception e) {
             logger.error("Failed to read from database with error: {}", sys.getStackTrace(e));
         }
@@ -146,7 +150,9 @@ public class db {
      */
     public static void remove(String User, String Key) {
         try {
-            db.delete(bytes(User + "_" + Key));
+            JSONObject doc = getDocument(User);
+            doc.remove(Key);
+            saveDocument(User, doc);
         } catch (Exception e) {
             logger.error("Failed to remove object from LevelDB: {}", sys.getStackTrace(e));
         }
@@ -158,13 +164,13 @@ public class db {
      * @param User The user ID.
      */
     public static void remove(String User) {
-        try (DBIterator iterator = db.iterator()) {
+        try (WriteBatch batch = db.createWriteBatch()) {
+            DBIterator iterator = db.iterator();
             for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
                 String key = asString(iterator.peekNext().getKey());
-                if (key.startsWith(User + "_")) {
-                    db.delete(iterator.peekNext().getKey());
-                }
+                if (key.equals(User)) batch.delete(iterator.peekNext().getKey());
             }
+            db.write(batch);
         } catch (Exception e) {
             logger.error("Failed to remove array from LevelDB: {}", sys.getStackTrace(e));
         }
@@ -214,6 +220,35 @@ public class db {
             logger.error("Failed to retrieve key size from database with error: {}", sys.getStackTrace(e));
         }
         return count;
+    }
+
+    /**
+     * Returns the file size of the database in a human-readable format.
+     *
+     * @param Format The format of which the File size should be returned, (e.g., "%.1f%s" -> "34KB")
+     * @return The file size as a string (e.g., "2.5 MB", "1.2 GB"), or "ERR" on error.
+     */
+    public static String fileSize(String Format) { // %.1f%s
+        try {
+            long size = Files.size(Paths.get(path));
+            String unit = size < 1024 ? "B" : size < 1024 * 1024 ? "KB" : size < 1024 * 1024 * 1024 ? "MB" : "GB";
+            size = (size >= 1024) ? size / 1024 : size;
+            size = (size >= 1024) ? size / 1024 : size;
+            size = (size >= 1024) ? size / 1024 : size;
+            return String.format(Format, (double) size, unit);
+        } catch (Exception e) {
+            logger.error("Failed to get file size from database: {}", e.getMessage());
+            return "ERR";
+        }
+    }
+
+    /**
+     * Returns the file size of the database in a human-readable format.
+     *
+     * @return The file size as a string (e.g., "2.5 MB", "1.2 GB"), or "ERR" on error.
+     */
+    public static String fileSize() { // %.1f%s
+        return fileSize("%.1f %s");
     }
 
     /**
@@ -269,13 +304,10 @@ public class db {
                 for (Object msgIDObj : msgIDs) {
                     String msgID = (String) msgIDObj;
                     String[] split = msgID.split("-");
-                    Message message = jda.getGuildById(split[0]).getTextChannelById(split[1]).retrieveMessageById(split[2]).complete();
-                    if (message != null) {
-                        message.editMessageEmbeds(new EmbedBuilder(message.getEmbeds().get(0))
-                                .setDescription("*This post has been removed by a " + jda.getSelfUser().getName() + " moderator.*").build()).queue();
-                        message.delete().queue();
-                        message.editMessageComponents(Collections.emptyList()).queue();
-                    }
+                    Message message = jda.getGuildById(split[0]).getTextChannelById(read("channels", split[0])).retrieveMessageById(split[1]).complete();
+                    message.editMessageEmbeds(new EmbedBuilder(message.getEmbeds().getFirst())
+                            .setDescription("*This post has been removed by a " + jda.getSelfUser().getName() + " moderator.*").build()).queue();
+                    message.editMessageComponents(Collections.emptyList()).queue();
                 }
                 posts.remove(postID);
                 saveDocument("posts", posts);
@@ -296,16 +328,18 @@ public class db {
     public static String postID(String MessageID){
         try {
             JSONObject posts = getDocument("posts");
-            for (Object keyObj : posts.keySet()) {
-                String key = (String) keyObj;
-                JSONArray msgIDs = (JSONArray) posts.get(key);
-                if (msgIDs.contains(MessageID)) {
-                    return key;
+            for (Object key : posts.keySet()) {
+                for(Object id : ((JSONArray) posts.get(key))){
+                    if(id.toString().split("-")[1].equals(MessageID)) return key.toString();
                 }
             }
         } catch (Exception e) {
             logger.error("Failed to retrieve Post ID from database with error: {}", sys.getStackTrace(e));
         }
         return null;
+    }
+
+    public static DB retrieve() {
+        return db;
     }
 }

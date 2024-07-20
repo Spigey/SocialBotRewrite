@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.RestAction;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -24,8 +26,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-import static spigey.bot.DiscordBot.jda;
-import static spigey.bot.DiscordBot.prefix;
+import static org.fusesource.leveldbjni.JniDBFactory.asString;
+import static spigey.bot.DiscordBot.*;
+import static spigey.bot.system.db.getDocument;
 
 public class util {
     private static MessageReceivedEvent eventt;
@@ -68,15 +71,18 @@ public class util {
         System.out.println(content);
     }
     public static void debug(Object content, boolean chat){ // basically for gemini to understand that this will be debug, not basic output
-        log("\u001B[42;30m[DEBUG]: " + content + " \u001B[49m");
+        // log("\u001B[42;30m[DEBUG]: " + content + " \u001B[49m");
+        log.info(content.toString());
         if(chat) msg("```\n" + content + "\n```");
     }
     public static void error(Object content, boolean chat) {
-        log("\u001B[41;30m[ERROR]: " + content + "\u001B[0m");
+        // log("\u001B[41;30m[ERROR]: " + content + "\u001B[0m");
+        log.error(content.toString());
         if(chat) msg("```\n" + content + "\n```");
     }
     public static void warn(Object content, boolean chat) {
-        log("\u001B[43;30m[WARN]: " + content + "\u001B[0m");
+        // log("\u001B[43;30m[WARN]: " + content + "\u001B[0m");
+        log.warn(content.toString());
         if(chat) msg("```\n" + content + "\n```");
     }
 
@@ -119,49 +125,46 @@ public class util {
         return out;
     }
 
-    public static boolean notif(String username, MessageEmbed embed) throws Exception {
+    private static DB dbase = db.retrieve();
+
+    public static boolean notif(String username, MessageEmbed embed) {
         boolean found = false;
-        try {
-            JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
-            for (Object userId : existingData.keySet()) {
-                if(!(existingData.get(userId) instanceof JSONArray userData)) continue;
-                for (Object obj : userData) {
-                    if (!(obj instanceof JSONObject userObject)) continue;
-                    if (!(userObject.containsKey("account") && userObject.get("account").equals(username))) continue;
-                    User user = jda.retrieveUserById((String) userId).complete();
-                    if (user == null) continue;
-                    found = true;
-                    user.openPrivateChannel().queue(privateChannel -> {
-                        privateChannel.sendMessage("").addEmbeds(embed).queue();
-                    });
+        try (DBIterator iterator = dbase.iterator()) {
+            for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+                String userId = asString(iterator.peekNext().getKey());
+                JSONObject userObject = getDocument(userId);
+                if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
+                    User user = jda.retrieveUserById(userId).complete();
+                    if (user != null) {
+                        user.openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage("").addEmbeds(embed).queue());
+                        found = true;
+                    }
                 }
             }
-        } catch (Exception L) {
-            sys.errInfo(L);
-            return false;
+        } catch (Exception e) {
+            sys.errInfo(e);
         }
         return found;
     }
 
-    public static boolean userExists(String username){
-        return !Objects.equals(db.read(username, "password", ""), "");
+    public static boolean userExists(String username) {
+        return !db.read(username, "password", "").isEmpty();
     }
 
-    public static void notif(String username, MessageEmbed embed, Button... buttons) throws Exception {
-        JSONObject existingData = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/system/database/database.json"));
-        for (Object userId : existingData.keySet()) {
-            JSONArray userData = (JSONArray) existingData.get(userId);
-            for (Object obj : userData) {
-                JSONObject userObject = (JSONObject) obj;
+    public static void notif(String username, MessageEmbed embed, Button... buttons) {
+        try (DBIterator iterator = dbase.iterator()) {
+            for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+                String userId = asString(iterator.peekNext().getKey());
+                JSONObject userObject = getDocument(userId);
                 if (userObject.containsKey("account") && userObject.get("account").equals(username)) {
-                    User user = jda.retrieveUserById((String) userId).complete();
+                    User user = jda.retrieveUserById(userId).complete();
                     if (user != null) {
-                        user.openPrivateChannel().queue(privateChannel -> {
-                            privateChannel.sendMessage("").addEmbeds(embed).addActionRow(buttons).queue();
-                        });
+                        user.openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage("").addEmbeds(embed).addActionRow(buttons).queue());
                     }
                 }
             }
+        } catch (Exception e) {
+            sys.errInfo(e);
         }
     }
 
@@ -171,21 +174,16 @@ public class util {
         List<CompletableFuture<User>> userFutures = new ArrayList<>();
 
         CompletableFuture.runAsync(() -> {
-            try (FileReader reader = new FileReader("src/main/java/spigey/bot/system/database/database.json")) {
-                JSONObject existingData = (JSONObject) new JSONParser().parse(reader);
-
-                for (Object key : existingData.keySet()) {
-                    String userId = (String) key;
-                    JSONArray userData = (JSONArray) existingData.get(key);
-                    for (Object obj : userData) {
-                        JSONObject userObject = (JSONObject) obj;
-                        if (userObject.containsKey("account") && (username.equals("*") || userObject.get("account").equals(username))) {
-                            RestAction<User> userAction = jda.retrieveUserById(userId);
-                            CompletableFuture<User> userFuture = new CompletableFuture<>();
-                            userAction.queue(userFuture::complete, userFuture::completeExceptionally);
-                            userFutures.add(userFuture);
-                            break; // Assumption: Only one match per userId
-                        }
+            try (DBIterator iterator = dbase.iterator()) {
+                for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+                    String userId = asString(iterator.peekNext().getKey());
+                    JSONObject userObject = getDocument(userId);
+                    if (userObject.containsKey("account") && (username.equals("*") || userObject.get("account").equals(username))) {
+                        RestAction<User> userAction = jda.retrieveUserById(userId);
+                        CompletableFuture<User> userFuture = new CompletableFuture<>();
+                        userAction.queue(userFuture::complete, userFuture::completeExceptionally);
+                        userFutures.add(userFuture);
+                        break;
                     }
                 }
 
@@ -205,35 +203,25 @@ public class util {
                             future.completeExceptionally(ex);
                             return null;
                         });
-
             } catch (Exception e) {
                 future.completeExceptionally(e);
             }
-            sys.warn("fortnet");
         });
-        sys.warn("work!!");
 
         return future;
     }
 
-
-
     public static boolean userExec(String username, Consumer<User> action) {
         boolean found = false;
-        try (FileReader reader = new FileReader("src/main/java/spigey/bot/system/database/database.json")) {
-            JSONObject existingData = (JSONObject) new JSONParser().parse(reader);
-
-            if (existingData.containsKey(username)) {
-                JSONArray userData = (JSONArray) existingData.get(username);
-                for (Object obj : userData) {
-                    if (obj instanceof JSONObject && ((JSONObject) obj).containsKey("account")) {
-                        String userId = (String) ((JSONObject) obj).get("account");
-                        jda.retrieveUserById(userId).queue(user -> {
-                            if (user != null) {
-                                action.accept(user);
-                            }
-                        });
-                        return true;
+        try (DBIterator iterator = dbase.iterator()) {
+            for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+                String userId = asString(iterator.peekNext().getKey());
+                JSONObject userObject = getDocument(userId);
+                if (userObject.containsKey("account") && (userObject.get("account").equals(username))) {
+                    User user = jda.retrieveUserById(userId).complete();
+                    if (user != null) {
+                        action.accept(user);
+                        found = true;
                     }
                 }
             }
@@ -249,7 +237,7 @@ public class util {
         List<Command.Choice> choices = list.stream()
                 .filter(word -> word.toLowerCase().startsWith(event.getFocusedOption().getValue().toLowerCase()))
                 .map(word -> new Command.Choice(word, word))
-                .limit(25) // Maximum of 25 choices allowed
+                .limit(25)
                 .collect(Collectors.toList());
         event.replyChoices(choices).queue();
     }

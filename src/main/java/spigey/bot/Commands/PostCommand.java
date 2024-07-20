@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 // import static spigey.bot.DiscordBot.badWords;
 import static spigey.bot.DiscordBot.jda;
+import static spigey.bot.DiscordBot.log;
 import static spigey.bot.system.sys.errInfo;
 
 @CommandInfo(
@@ -50,7 +51,7 @@ public class PostCommand implements Command {
         if(event.getGuild() == null){event.reply("Commands are disabled in DMs, tough luck mguy").queue(); return 0;}
         if(Objects.equals(db.read(event.getUser().getId(), "account"), "0")){event.reply("You have to register first to post something!").setEphemeral(true).queue(); return 0;}
         if(Objects.equals(db.read("channels", event.getGuild().getId()), "0")){event.reply("This bot hasn't been set up on this server yet! Tell an admin to run `/setchannel <channel>`.").queue(); return 0;}
-        if(event.getOption("content").getAsString().length() > 300){event.reply("Your post must at most be 300 characters in length!").setEphemeral(true).queue(); return 0;}
+        if((event.getOption("content").getAsString().length() > 300) && db.read(db.read(event.getUser().getId(), "account"), "verified").equals("0")){event.reply("Your post must at most be 300 characters in length!").setEphemeral(true).queue(); return 0;}
         if(Objects.equals(db.read(db.read(event.getUser().getId(), "account"), "verified"), "0")) if(event.getOption("attachment") != null && !event.getOption("attachment").getAsAttachment().getContentType().contains("image/")){sys.warn(event.getUser().getId() + " attempted to upload " + event.getOption("attachment").getAsAttachment().getContentType()); event.reply("You are not allowed to post this file type!").setEphemeral(true).queue(); return 0;}
         JSONArray channelsArray = db.getArray("channels");
         String username = db.read(event.getUser().getId(), "account");
@@ -129,11 +130,14 @@ public class PostCommand implements Command {
         String[] users = db.read(username, "followers", "").split(", ");
         String userString = db.read(username, "followers", "");
         for(String user : users){
-            if(!util.notif(user, followEmbed.build())){
+            db.write(user, "notifications", "post-" + username + "," + db.read(user, "notifications", ""));
+            if(db.read(user, "password").equals("0")){
                 userString = userString.replace(user + ", ", ", ");
             }
         }
         db.write(username, "followers", userString);
+
+        log.info("Post by user @{} was posted with PostID {}", username, postID);
 
         AtomicReference<String> url = new AtomicReference<>("");
         event.getJDA().getGuildById("1246040271435730975").getTextChannelById("1246040631801810986").sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue(message -> {

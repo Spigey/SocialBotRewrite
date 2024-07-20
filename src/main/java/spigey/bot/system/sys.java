@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 
 import com.nulabinc.zxcvbn.*;
 import spigey.bot.DiscordBot;
+
+import static spigey.bot.DiscordBot.log;
 // compile 'com.nulab-inc:zxcvbn:1.9.0'
 
 public class sys {
@@ -129,56 +131,47 @@ public class sys {
         System.out.print(message);
     }
     public static void debug(Object content) {
-        ln("\u001B[42;30m[DEBUG]: " + content + " \u001B[49m\u001B[0m" + ANSI_RESET);
+        // ln("\u001B[42;30m[DEBUG]: " + content + " \u001B[49m\u001B[0m" + ANSI_RESET);
+        log.info(content.toString()); // TODO: wtf??
         try {
             DiscordBot.console.sendMessage("```[DEBUG]: " + content + "```").queue();
         }catch (Exception L){/**/}
     }
 
     public static void error(Object content) {
-        ln("\u001B[41;30m[ERROR]: " + content + "\u001B[0m");
+        // ln("\u001B[41;30m[ERROR]: " + content + "\u001B[0m");
+        log.error(content.toString());
         try{
             DiscordBot.console.sendMessage("```[ERROR]: " + content + "```").queue();
         }catch (Exception L){/**/}
     }
 
     public static void warn(Object content) {
-        ln("\u001B[43;30m[WARN]: " + content + "\u001B[0m");
+        // ln("\u001B[43;30m[WARN]: " + content + "\u001B[0m");
+        log.warn(content.toString());
         try{
             DiscordBot.console.sendMessage("```[WARN]: " + content + "```").queue();
         }catch (Exception L){/**/}
     }
 
-    private static SecretKeySpec generateKey(String encryptionKey) throws Exception {
+    private static SecretKey getKey(String key) throws Exception {
+        byte[] salt = "fixed-salt".getBytes(StandardCharsets.UTF_8);
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec spec = new PBEKeySpec(encryptionKey.toCharArray(), encryptionKey.getBytes(), 65536, 256);
+        KeySpec spec = new PBEKeySpec(key.toCharArray(), salt, 65536, 256);
         return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
     }
 
-    public static String encrypt(String plaintext, String encryptionKey) throws Exception {
+    public static String encrypt(String plainText, String key) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        byte[] iv = new byte[12];
-        new SecureRandom().nextBytes(iv);
-        cipher.init(Cipher.ENCRYPT_MODE, generateKey(encryptionKey), new GCMParameterSpec(128, iv));
-        byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(iv) + ":" + Base64.getEncoder().encodeToString(ciphertext); // Combine IV and ciphertext
+        cipher.init(Cipher.ENCRYPT_MODE, getKey(key), new GCMParameterSpec(128, env.IV));
+        return Base64.getEncoder().encodeToString(cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8)));
     }
 
-
-    public static String decrypt(String ciphertext, String encryptionKey) throws Exception {
-        try {
-            String[] parts = ciphertext.split(":"); // Split at the delimiter
-            byte[] iv = Base64.getDecoder().decode(parts[0]);
-            byte[] ct = Base64.getDecoder().decode(parts[1]);
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(2, generateKey(encryptionKey), new GCMParameterSpec(128, iv));
-            return new String(cipher.doFinal(ct));
-        } catch (Exception e) {
-            error(e.getMessage());
-            return ciphertext;
-        }
+    public static String decrypt(String cipherText, String key) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.DECRYPT_MODE, getKey(key), new GCMParameterSpec(128, env.IV));
+        return new String(cipher.doFinal(Base64.getDecoder().decode(cipherText)), StandardCharsets.UTF_8);
     }
-
     public static String trim(String s, int l) {
         return s.length() > l ? s.substring(0, l - 4) + "..." : s;
     }

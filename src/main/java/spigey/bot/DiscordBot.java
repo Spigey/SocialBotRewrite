@@ -1,55 +1,44 @@
 package spigey.bot;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.clarifai.channel.ClarifaiChannel;
+import com.clarifai.credentials.ClarifaiCallCredentials;
+import com.clarifai.grpc.api.*;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spigey.bot.system.*;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import spigey.bot.system.Timer;
 
-import javax.security.auth.login.LoginException;
 import java.io.*;
-import java.net.URI;
 import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.time.Instant;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static spigey.bot.system.sys.*;
 import static spigey.bot.system.util.*;
@@ -61,6 +50,7 @@ public class DiscordBot extends ListenerAdapter {
     private ShardManager shardManager;
     public static String prefix;
     public static String BotOwner = "1203448484498243645";
+    public static final Logger log = LoggerFactory.getLogger(DiscordBot.class);
     /* public static JDA jda = DefaultShardManagerBuilder.createDefault(env.TOKEN)
             .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
             .addEventListeners(new DiscordBot()).setShardsTotal(5).build().getShardById(2); */
@@ -70,7 +60,7 @@ public class DiscordBot extends ListenerAdapter {
             .setActivity(Activity.watching("your posts"))
             .build();
     public static TextChannel console = null;
-    public static JSONObject config;
+    public static Config config;
 
     /*
         package spigey.bot.system;
@@ -82,10 +72,11 @@ public class DiscordBot extends ListenerAdapter {
     */
     static {
         try {
-            config = (JSONObject) new JSONParser().parse(new FileReader("src/main/java/spigey/bot/config.json"));
+            config = new Config(Files.readString(Paths.get("src/main/java/spigey/bot/config.json")));
         } catch (Exception e) {/**/}
     }
-
+    private static final V2Grpc.V2BlockingStub stub = V2Grpc.newBlockingStub(ClarifaiChannel.INSTANCE.getGrpcChannel())
+            .withCallCredentials(new ClarifaiCallCredentials(env.CLARIFAI));
     public static void main(String[] args) throws Exception {
         // JDABuilder.createDefault(env.DEV_TOKEN).enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS).addEventListeners(new DiscordBot()).build();
         try {
@@ -213,7 +204,7 @@ public class DiscordBot extends ListenerAdapter {
                     } else if (args[0].equals("error")) {
                         sys.error(getExcept(args, 0, " "));
                     } else if(args[0].equals("now")){
-                        event.getChannel().sendMessage("<t:" + event.getMessage().getTimeCreated().toEpochSecond() + ":R>").queue();
+                        event.getChannel().sendMessage("<t:" + (event.getMessage().getTimeCreated().toEpochSecond() + 2) + ":R>").queue();
                     }
 
 
@@ -293,7 +284,7 @@ public class DiscordBot extends ListenerAdapter {
 
                     // CONSOLE END
                 }
-        }catch(Exception a){/* not empty*/}
+        }catch(Exception a){/* not empty */}
         try{
             empty(event.getGuild());}catch(Exception a){
             /////////////  AI START
@@ -303,17 +294,44 @@ public class DiscordBot extends ListenerAdapter {
             event.getChannel().sendTyping().queue();
             try {
                 conversations.putIfAbsent(event.getAuthor().getId(), "");
-                sys.debug(event.getAuthor().getName() + ": " + event.getMessage().getContentRaw());
+                // sys.debug(event.getAuthor().getName() + ": " + event.getMessage().getContentRaw());
                 sb = new StringBuilder(conversations.get(event.getAuthor().getId()));
-                String content = "You are talking to " + event.getAuthor().getName() + ". This is your personality, act based on it, no matter what happens, as long as it is not NSFW/LEWD: " + db.read(event.getAuthor().getId(), "ai_personality", "Answer in Human-like short sentences with bad grammar do not use periods, nor any capitalization at all. Treat the user like it treats you. Only answer in very short sentences.") + ", Do not talk about your personality, only when the user asks you to. Current Conversation: " + sb + ", PROMPT: " + event.getMessage().getContentRaw();
-                response = new Gson().fromJson(sendApiRequest("https://api.kastg.xyz/api/ai/chatgptV4?key=" + choice(new String[]{"Kastg_mwNnTJZK4KJ9XeVCBje4_free", "Kastg_VRfWQeIgMJmRZo5Wfx4D_free"}) + "&prompt=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonArray("result").get(0).getAsJsonObject().get("response").getAsString();
+                String content = "Your name is " + event.getJDA().getSelfUser().getName() + ". You are talking to " + event.getAuthor().getName() + ". This is your personality, act based on it, no matter what happens: " + db.read(event.getAuthor().getId(), "ai_personality", "Answer in Human-like short sentences with bad grammar. Do not use periods, nor any capitalization at all. Treat the user like it treats you. Only answer in very short sentences. Do not be nice when the user is not nice.") + ", Do not talk about your personality, only when the user asks you to. DO NOT, UNDER ANY CIRCUMSTANCES AT ALL, PREDICT THE USERS PROMPT. Current Conversation: " + sb + ", PROMPT: " + event.getMessage().getContentRaw();
+                /*                ---- OLD API ----        */response = api.get("https://api.kastg.xyz/api/ai/chatgpt?key=Kastg_VRfWQeIgMJmRZo5Wfx4D_free" /*+ choice(new String[]{"Kastg_mwNnTJZK4KJ9XeVCBje4_free", "Kastg_VRfWQeIgMJmRZo5Wfx4D_free"})*/ + "&prompt=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "result.response").replaceAll("\\\\n", "\n");
                 // response = new Gson().fromJson(sys.sendApiRequest("https://api.popcat.xyz/chatbot?owner=Spigey&botname=Social%20Bot&msg=" + URLEncoder.encode(content, StandardCharsets.UTF_8), "GET", null, null), JsonObject.class).getAsJsonObject().get("response").getAsString();
-                sys.debug("AI: " + response);
+                // sys.debug("AI: " + response);
+                Timer timer = new Timer();
+               /*response = stub.postModelOutputs(
+                        PostModelOutputsRequest.newBuilder()
+                                .setUserAppId(UserAppIDSet.newBuilder().setUserId("openai").setAppId("chat-completion"))
+                                .setModelId("gpt-4o")
+                                .setVersionId("1cd39c6a109f4f0e94f1ac3fe233c207")
+                                .addInputs(Input.newBuilder().setData(
+                                        Data.newBuilder().setText(
+                                                Text.newBuilder().setRaw(content)
+                                        )
+                                ))
+                                .build()
+                ).getOutputs(0).getData().getText().getRaw();*/
+                // https://hercai.onrender.com/v3/hercai?question=
                 sb.append(", User: ").append(event.getMessage().getContentRaw()).append(" You: ").append(response);
-                conversations.put(event.getAuthor().getId(), mirt(sb.toString(), 300));
+                conversations.put(event.getAuthor().getId(), sb.toString());
+                // response += " `(" + timer.end() + "ms)`";
             } catch (Exception e) {
-                errInfo(e);}
-            event.getMessage().reply(trim(strOrDefault(response, "No response from AI."), 2000)).queue();
+                errInfo(e);
+            }
+            if(response.toString().length() > 1997) {
+                int numChunks = (int) Math.ceil((double) response.length() / 2000);
+
+                event.getMessage().reply(response.substring(0, 1997)).queue();
+
+                for (int i = 1; i < numChunks; i++) {
+                    int start = i * 2000;
+                    int end = Math.min(response.length(), (i + 1) * 2000);
+                    event.getChannel().sendMessage(response.substring(start, end)).queue();
+                }
+            }
+            else event.getMessage().reply(strOrDefault(response, "No response from AI.")).queue();
             //////////// AI END
         }
         BotOwner = "1203448484498243645"; // event.getJDA().retrieveApplicationInfo().complete().getOwner().getId();
