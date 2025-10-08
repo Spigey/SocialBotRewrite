@@ -25,7 +25,7 @@ import static spigey.bot.system.sys.*;
 public class ManageCommand implements Command {
     @Override
     public void execute(MessageReceivedEvent event, String[] args) throws Exception {
-        if(!"941366409399787580, 1203448484498243645, 1128164873554112513, ".contains(event.getAuthor().getId() + ", ")){return;}
+        if(!"1314736492844945468, 1284432183389323330, 941366409399787580, 1203448484498243645, 1128164873554112513, 814831970633908266, 1247186789391667213, ".contains(event.getAuthor().getId() + ", ")){return;}
         if(args[0].equalsIgnoreCase(prefix + "chdel")){event.getChannel().delete().queue(); return;}
         if(args[0].equalsIgnoreCase(prefix + "clear")){event.getChannel().getHistory().retrievePast(100).queue(messages -> {
             event.getChannel().purgeMessages(messages);

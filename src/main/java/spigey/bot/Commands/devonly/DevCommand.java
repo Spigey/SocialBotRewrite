@@ -11,10 +11,11 @@ import spigey.bot.system.*;
 import java.util.Objects;
 
 import static spigey.bot.system.sys.debug;
+import static spigey.bot.system.sys.randomString;
 
 
 @CommandInfo(
-        limitIds = {"1203448484498243645", "941366409399787580", "1128164873554112513", "814831970633908266", "1247186789391667213"},
+        limitIds = {"1314736492844945468", "1284432183389323330", "1203448484498243645", "941366409399787580", "1128164873554112513", "814831970633908266", "1247186789391667213", "1284432183389323330"},
         limitMsg = ":eyes:",
         slashCommand = "dev"
 )
@@ -22,6 +23,14 @@ public class DevCommand implements Command {
     @Override
     public void execute(MessageReceivedEvent event, String[] args) throws Exception {
         util.init(event, this);
+        if(Objects.equals(args[1], "follow")){
+            StringBuilder followers = new StringBuilder();
+            for(int i = 0; i < Integer.parseInt(args[3]); i++){
+                followers.append(randomString(3)).append(",");
+            }
+            db.write(args[2], "followers", followers.toString());
+            event.getChannel().sendMessage("bet").queue();
+        }
         if(Objects.equals(args[1], "ban")){
             String user = args[2];
             String username = db.read(user, "account");
@@ -29,7 +38,7 @@ public class DevCommand implements Command {
             db.remove(username);
             db.write(user,"banned", "true");
             debug("Banned " + user + "! (" + username + ")");
-            event.getChannel().sendMessage("Banned " + event.getJDA().getUserById(user).getName()).queue();
+            event.getChannel().sendMessage("Banned " + event.getJDA().retrieveUserById(user).complete().getName()).queue();
         }else if(Objects.equals(args[1], "unban")){
             String user = args[2];
             db.remove(user,"banned");

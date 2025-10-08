@@ -27,7 +27,7 @@ public class db {
     private static final JSONParser parser = new JSONParser();
 
     /**
-     * Initializes the LevelDB database with the specified path and default value.
+     * Initializes the db database with the specified path and default value.
      * It sets up the database options and logs whether the initialization was successful.
      *
      * @param DatabasePath The path to the database file.
@@ -40,9 +40,9 @@ public class db {
             options.createIfMissing(true);
             def = DefaultValue;
             db = factory.open(new File(DatabasePath), options);
-            logger.info("Initialized LevelDB Database at '{}' ({} keys, {})", DatabasePath, keySize(), fileSize("%.1f %s"));
+            logger.info("Initialized db Database at '{}' ({} keys, {})", DatabasePath, keySize(), fileSize("%.1f %s"));
         } catch (Exception e) {
-            logger.error("Failed to initialize LevelDB Database: {}", sys.getStackTrace(e));
+            logger.error("Failed to initialize db Database: {}", sys.getStackTrace(e));
         }
     }
 
@@ -74,7 +74,7 @@ public class db {
         try {
             db.put(bytes(id), bytes(data.toJSONString()));
         } catch (Exception e) {
-            logger.error("Failed to write to LevelDB: {}", sys.getStackTrace(e));
+            logger.error("Failed to write to db: {}", sys.getStackTrace(e));
         }
     }
 
@@ -154,7 +154,7 @@ public class db {
             doc.remove(Key);
             saveDocument(User, doc);
         } catch (Exception e) {
-            logger.error("Failed to remove object from LevelDB: {}", sys.getStackTrace(e));
+            logger.error("Failed to remove object from db: {}", sys.getStackTrace(e));
         }
     }
 
@@ -172,7 +172,7 @@ public class db {
             }
             db.write(batch);
         } catch (Exception e) {
-            logger.error("Failed to remove array from LevelDB: {}", sys.getStackTrace(e));
+            logger.error("Failed to remove array from db: {}", sys.getStackTrace(e));
         }
     }
 
@@ -306,7 +306,8 @@ public class db {
                     String[] split = msgID.split("-");
                     Message message = jda.getGuildById(split[0]).getTextChannelById(read("channels", split[0])).retrieveMessageById(split[1]).complete();
                     message.editMessageEmbeds(new EmbedBuilder(message.getEmbeds().getFirst())
-                            .setDescription("*This post has been removed by a " + jda.getSelfUser().getName() + " moderator.*").build()).queue();
+                            .setDescription("*This post has been removed by a " + jda.getSelfUser().getName() + " moderator.*")
+                            .setImage(null).build()).queue();
                     message.editMessageComponents(Collections.emptyList()).queue();
                 }
                 posts.remove(postID);
@@ -329,6 +330,7 @@ public class db {
         try {
             JSONObject posts = getDocument("posts");
             for (Object key : posts.keySet()) {
+                System.out.println(posts.get(key));
                 for(Object id : ((JSONArray) posts.get(key))){
                     if(id.toString().split("-")[1].equals(MessageID)) return key.toString();
                 }

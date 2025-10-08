@@ -7,12 +7,15 @@ import spigey.bot.system.CommandInfo;
 import java.util.Collections;
 import java.util.List;
 
+import static spigey.bot.DiscordBot.BotOwner;
+
 @CommandInfo(
         buttonId = "rm"
 )
 public class RmButtonCommand implements Command {
     @Override
     public void button(ButtonInteractionEvent event) throws Exception {
+        if (!event.getMember().getId().equals(BotOwner)) return;
         List<ActionRow> emptyActionRows = Collections.emptyList();
         event.editComponents(emptyActionRows).queue();
     }

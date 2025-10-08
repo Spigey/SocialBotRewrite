@@ -168,9 +168,14 @@ public class sys {
     }
 
     public static String decrypt(String cipherText, String key) throws Exception {
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        cipher.init(Cipher.DECRYPT_MODE, getKey(key), new GCMParameterSpec(128, env.IV));
-        return new String(cipher.doFinal(Base64.getDecoder().decode(cipherText)), StandardCharsets.UTF_8);
+        try {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, getKey(key), new GCMParameterSpec(128, env.IV));
+            return new String(cipher.doFinal(Base64.getDecoder().decode(cipherText)), StandardCharsets.UTF_8);
+        }catch(Exception WHAT){
+            System.out.println(WHAT.getMessage());
+            return WHAT.getMessage();
+        }
     }
     public static String trim(String s, int l) {
         return s.length() > l ? s.substring(0, l - 4) + "..." : s;
@@ -345,5 +350,21 @@ public class sys {
     public static boolean bool(Object text) {
         Object[] True = { "true", "1", "yes", "y" };
         return text != null && Arrays.asList(True).contains(text.toString().toLowerCase());
+    }
+
+    public static String randomString(int length){
+        return new Random().ints(length, 0, 26).mapToObj(i -> (char) ('a' + i)).collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
+    }
+
+    public static String sha512(String text) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-512");
+        byte[] hashBytes = digest.digest(text.getBytes());
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hashBytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
+        }
+        return hexString.toString();
     }
 }

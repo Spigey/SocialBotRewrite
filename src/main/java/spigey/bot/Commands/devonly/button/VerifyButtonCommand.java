@@ -7,12 +7,15 @@ import spigey.bot.system.*;
 
 import java.util.Objects;
 
+import static spigey.bot.DiscordBot.BotOwner;
+
 @CommandInfo(
         buttonId = "verify"
 )
 public class VerifyButtonCommand implements Command {
     @Override
     public void button(ButtonInteractionEvent event) throws Exception {
+        if (!event.getMember().getId().equals(BotOwner)) return;
         String username = event.getMessage().getEmbeds().get(0).getDescription().split("`")[1];
         String user = event.getMessage().getContentRaw();
         if(Objects.equals(db.read(username, "verified"), "0")){

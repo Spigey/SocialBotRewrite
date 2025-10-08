@@ -32,12 +32,16 @@ public class NotificationsCommand implements Command {
                             sb.append("\n" + EmojiDB.add + " **@").append(notif.split("-")[1]).append("** has accepted your friend request!");
                     case "post" ->
                             sb.append("\n:speech_balloon: **@").append(notif.split("-")[1]).append("** has posted!");
+                    default ->
+                            sb.append("\n").append(notif);
                 }
             } else{
                 if(notif.equals("verified")){
                     if(!db.read(username, "verified").equals("0")) sb.append("\n").append(db.read(username, "verified")).append(" You are now verified!");
                 } else if (notif.equals("post-removed")) {
                     sb.append("\n:octagonal_sign: One of your posts has been removed.");
+                } else {
+                    sb.append("\n").append(notif);
                 }
             }
         }

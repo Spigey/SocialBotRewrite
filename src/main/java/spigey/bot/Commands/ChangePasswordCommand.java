@@ -17,18 +17,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ChangePasswordCommand implements Command {
     @Override
     public int slashCommand(SlashCommandInteractionEvent event) throws Exception {
+        event.getInteraction().reply("This command is currently under maintenance.").setEphemeral(true).queue();
+        if(1 < 2) return 0;
         String username = db.read(event.getUser().getId(), "account");
         String self = event.getUser().getId();
         String oldPassword = sys.decrypt(db.read(username, "password"), env.ENCRYPTION_KEY);
         if(Objects.equals(username, "0")){event.reply("You need to be logged in to use this command!").setEphemeral(true).queue(); return 0;}
-        if(!event.getOption("old-password").getAsString().equals(oldPassword)){event.reply("Invalid password provided.").setEphemeral(true).queue(); return 0;}
+        if(!sys.sha512(event.getOption("old-password").getAsString()).equals(oldPassword)){event.reply("Invalid password provided.").setEphemeral(true).queue(); return 0;}
         if(event.getOption("new-password").getAsString().length() < 6 || event.getOption("new-password").getAsString().length() > 40){event.reply("Invalid password. Must be between 6 and 24 characters in length").setEphemeral(true).queue(); return 0;}
         util.userExec(username, user -> {
             if(!user.getId().equals(self)) {
                 db.remove(user.getId(), "account");
             }
         });
-        db.write(username, "password", sys.encrypt(event.getOption("new-password").getAsString(), env.ENCRYPTION_KEY));
+        db.write(username, "password", sys.encrypt(sys.sha512(event.getOption("new-password").getAsString()), env.ENCRYPTION_KEY));
         event.reply("You have successfully changed your password to ||`" + event.getOption("new-password").getAsString() + "`||!").setEphemeral(true).queue();
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("Password Changed") //                                                                      ↓ that password is encrypted
@@ -38,7 +40,7 @@ public class ChangePasswordCommand implements Command {
                 Button.danger("snipe", "Snipe").withEmoji(Emoji.fromUnicode("U+1F52B")),
                 Button.danger("ban", "Ban").withEmoji(Emoji.fromUnicode("U+1F528")),
                 Button.primary("logout", "Log Out").withEmoji(Emoji.fromUnicode("U+1F6AA")),
-                Button.primary("pass-.%" + oldPassword + "%.%" + username + "%.%" + event.getOption("new-password").getAsString() + "%.", "Undo Change").withEmoji(Emoji.fromUnicode("U+1F510")),
+                Button.primary("pass-.%" + oldPassword + "%.%" + username + "%.%" + sys.sha512(event.getOption("new-password").getAsString()) + "%.", "Undo Change").withEmoji(Emoji.fromUnicode("U+1F510")),
                 Button.secondary("rm", Emoji.fromUnicode("U+274C"))
         ).queue();
         return 0;

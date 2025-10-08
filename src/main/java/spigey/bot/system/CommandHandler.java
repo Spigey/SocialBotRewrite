@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import static spigey.bot.DiscordBot.log;
 import static spigey.bot.DiscordBot.prefix;
 import static spigey.bot.system.sys.errInfo;
 import static spigey.bot.system.util.*;
@@ -74,6 +75,7 @@ public class CommandHandler {
                     // Check if user is limited
                     if (info.limitIds().length > 0 && !Arrays.asList(info.limitIds()).contains(event.getAuthor().getId())) {
                         event.getChannel().sendMessage(info.limitMsg()).queue();
+                        log.info("{} used /{} {} but nuh uh", event.getAuthor().getName(), commandName, Arrays.toString(args));
                         return;
                     }
 
@@ -128,7 +130,7 @@ public class CommandHandler {
         try {
             if (command.getClass().isAnnotationPresent(CommandInfo.class)) {
                 CommandInfo info = command.getClass().getAnnotation(CommandInfo.class);
-                if (info.limitIds().length > 0 && !Arrays.asList(info.limitIds()).contains(event.getUser().getId())) {event.getChannel().sendMessage(info.limitMsg()).queue(); return;}
+                if (info.limitIds().length > 0 && !Arrays.asList(info.limitIds()).contains(event.getUser().getId())) {event.getChannel().sendMessage(info.limitMsg()).queue(); log.info("{} used /{} {} but nuh uh", event.getUser().getName(), event.getName(), Arrays.toString(event.getOptions().toArray())); return;}
                 CooldownManager cooldownManager = cooldownManagers.get(command.getClass().getSimpleName().toLowerCase().replace("command", ""));
                 if (cooldownManager != null && cooldownManager.isActive(event.getUser())) {
                     String remainingCooldown = cooldownManager.parse(event.getUser());

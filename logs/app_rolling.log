@@ -1,6 +1,3 @@
-2024-06-28 10:15:22 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-28 10:15:22 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-28 10:15:22 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
-2024-06-28 10:21:05 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
-2024-06-28 10:21:05 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
-2024-06-28 10:21:05 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!
+2025-10-06 10:26:54 [main] INFO  net.dv8tion.jda.api.JDA - Login Successful!
+2025-10-06 10:26:54 [JDA MainWS-WriteThread] INFO  n.d.j.i.requests.WebSocketClient - Connected to WebSocket
+2025-10-06 10:26:55 [JDA MainWS-ReadThread] INFO  net.dv8tion.jda.api.JDA - Finished Loading!

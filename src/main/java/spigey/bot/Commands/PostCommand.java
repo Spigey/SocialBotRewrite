@@ -80,11 +80,14 @@ public class PostCommand implements Command {
                 if(event.getOption("attachment") != null){
                     Path temp = Files.createTempFile(null, null);
                     TextChannel finalPost = post;
-                    event.getOption("attachment").getAsAttachment().downloadToFile(temp.toFile()).thenAccept(file -> {
+                    event.getOption("attachment").getAsAttachment().getProxy().downloadToFile(temp.toFile()).thenAccept(file -> {
                         File attachment = new File(file.getParent(), event.getOption("attachment").getAsAttachment().getFileName());
                         file.renameTo(attachment);
                         if(!event.getOption("attachment").getAsAttachment().getContentType().contains("image")){
-                            finalPost.sendMessage("").addEmbeds(embed.build()).addFiles(FileUpload.fromData(attachment)).addActionRow(follow, report).queue();}
+                            finalPost.sendMessage("").addEmbeds(embed.build()).addFiles(FileUpload.fromData(attachment)).addActionRow(follow, report).queue(msg -> {
+                                try{db.postMeta(postID, msg.getGuild().getId() + "-" + msg.getId());}
+                                catch(Exception L){sys.errInfo(L);}
+                            });}
                         else{
                             try {
                                 EmbedBuilder img = new EmbedBuilder()
@@ -93,7 +96,10 @@ public class PostCommand implements Command {
                                         .setColor(EmbedColor.BLURPLE)
                                         .setImage(event.getOption("attachment").getAsAttachment().getProxyUrl())
                                         .setTimestamp(Instant.now());
-                                finalPost.sendMessage("").addEmbeds(img.build()).addActionRow(follow, report).queue();
+                                finalPost.sendMessage("").addEmbeds(img.build()).addActionRow(follow, report).queue(msg -> {
+                                    try{db.postMeta(postID, msg.getGuild().getId() + "-" + msg.getId());}
+                                    catch(Exception L){sys.errInfo(L);}
+                                });
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -107,7 +113,7 @@ public class PostCommand implements Command {
                         try{db.postMeta(postID, msg.getGuild().getId() + "-" + msg.getId());}
                         catch(Exception L){sys.errInfo(L);}
                     });
-                } catch(InsufficientPermissionException e){sys.warn("Failed to post to guild " + event.getJDA().getGuildById(post.getGuild().getId()).getName() + ": Insufficient Permissions!");}
+                } catch(InsufficientPermissionException e){sys.warn("Failed to post to guild " + event.getJDA().getGuildById(post.getGuild().getId()).getName() + ": Insufficient Permissions! <#" + post.getId() + ">");}
             }
         }
         Pattern mentionPattern = Pattern.compile("@(\\w[\\w._]*)");
@@ -115,11 +121,11 @@ public class PostCommand implements Command {
         Set<String> mentionedUsernames = new HashSet<>();
         while (matcher.find()) mentionedUsernames.add(matcher.group(1));
         for (String mentionedUsername : mentionedUsernames) {
-            /* EmbedBuilder pingEmbed = new EmbedBuilder()
+            EmbedBuilder pingEmbed = new EmbedBuilder()
                     .setTitle("New Mention!")
                     .setDescription("**You were mentioned in a post by " + username + ":**\n" + txt(event.getOption("content").getAsString()))
                     .setColor(EmbedColor.GOLD);
-            util.notif(mentionedUsername, pingEmbed.build()); */
+            util.notif(mentionedUsername, pingEmbed.build());
             db.write(mentionedUsername, "notifications", "mention-" + username + "," + db.read(username, "notifications"));
         }
         EmbedBuilder followEmbed = new EmbedBuilder()
@@ -137,7 +143,7 @@ public class PostCommand implements Command {
         }
         db.write(username, "followers", userString);
 
-        log.info("Post by user @{} was posted with PostID {}", username, postID);
+        log.info("Post by user @{} was created with PostID {}", username, postID);
 
         AtomicReference<String> url = new AtomicReference<>("");
         event.getJDA().getGuildById("1246040271435730975").getTextChannelById("1246040631801810986").sendMessage("").addEmbeds(embed.build()).addActionRow(follow, report).queue(message -> {
@@ -147,7 +153,7 @@ public class PostCommand implements Command {
                 Matcher dkjdfh = Pattern.compile("<@!?(\\d+)>").matcher(event.getOption("content").getAsString());
                 while(dkjdfh.find()){
                     try{dkjdfh.appendReplacement(sb, "@" + jda.retrieveUserById(dkjdfh.group(1)).complete().getName());}
-                    catch(ErrorResponseException L){dkjdfh.appendReplacement(sb, "@unkno...");}
+                    catch(Exception L){dkjdfh.appendReplacement(sb, "@unkno...");}
                 }
                 dkjdfh.appendTail(sb);
                 db.write(username, "posts", sys.trimMarkdown("\n[" + sys.trim(rmMarkdown(filter.words(sb.toString(), "?")),23) +"](" + url.get() + ")" + db.read(username, "posts", ""), 10));

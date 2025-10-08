@@ -5,10 +5,7 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import spigey.bot.system.Command;
-import spigey.bot.system.CommandInfo;
-import spigey.bot.system.db;
-import spigey.bot.system.sys;
+import spigey.bot.system.*;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -29,6 +26,7 @@ public class ProfileCommand implements Command {
         String posts = db.read(user, "posts", "\nThis user has not posted yet."); // was too lazy to revert changes
         MessageEmbed embed = new EmbedBuilder()
                 .setTitle("Profile")
+                .setColor(EmbedColor.BLURPLE)
                 .setDescription(String.format("**Name:** %s %s\n**Following:** %s\n**Followers:** %s\n**Status:** %s\n**Posts:** Can't click the links? Join our server [here](https://discord.gg/VX2BJ7r9Xq)%s\n**Friends:** %s\n**Last Online:** <t:%s:R> (<t:%s>)", user, db.read(user, "verified", ""), sys.occur(db.read(user, "following"), ", "), sys.occur(db.read(user, "followers"), ", "), db.read(user, "status", "/"), posts, db.read(user, "friends", "No friends yet :("), db.read(user, "last_online"), db.read(user, "last_online"))).build();
         event.reply("").addEmbeds(embed).addActionRow(follow).queue();
         return 1;

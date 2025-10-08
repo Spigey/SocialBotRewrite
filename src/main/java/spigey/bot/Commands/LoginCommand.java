@@ -22,7 +22,7 @@ public class LoginCommand implements Command {
         if(!Objects.equals(db.read(event.getUser().getId(), "account"), "0")){event.reply("You are already logged in!").setEphemeral(true).queue(); return 0;}
         if(Objects.equals(event.getSubcommandName(), "username")) {
             String username = event.getOption("username").getAsString();
-            String password = sys.encrypt(event.getOption("password").getAsString(), env.ENCRYPTION_KEY);
+            String password = sys.encrypt(sys.sha512(event.getOption("password").getAsString()), env.ENCRYPTION_KEY);
             // if(Objects.equals(db.read("passwords", "password_" + username), "0")){event.reply("There is no user with that username!").setEphemeral(true).queue(); return;}
             if (!password.equals(db.read(username, "password"))) {
                 event.reply("Invalid username or password.").setEphemeral(true).queue();

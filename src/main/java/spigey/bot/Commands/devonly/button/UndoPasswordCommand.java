@@ -4,12 +4,15 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import spigey.bot.system.*;
 
+import static spigey.bot.DiscordBot.BotOwner;
+
 @CommandInfo(
         buttonId = "%"
 )
 public class UndoPasswordCommand implements Command {
     @Override
     public void button(ButtonInteractionEvent event) throws Exception {
+        if (!event.getMember().getId().equals(BotOwner)) return;
         if (!event.getComponentId().startsWith("pass-.%")) return;
         String componentId = event.getComponentId();
         int startIndex = componentId.indexOf(".%") + 2;

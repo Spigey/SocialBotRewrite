@@ -8,7 +8,7 @@ import static spigey.bot.system.util.content;
 import static spigey.bot.system.util.msg;
 
 @CommandInfo(
-        aliases = {"grab", "snipe"}
+        aliases = {"ez"}
 )
 public class DecryptCommand implements Command {
     @Override

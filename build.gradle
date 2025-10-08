@@ -13,7 +13,7 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
-    implementation 'net.dv8tion:JDA:5.0.0-alpha.20'
+    implementation 'net.dv8tion:JDA:5.1.2'
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     implementation 'com.nulab-inc:zxcvbn:1.9.0'
     implementation 'com.google.code.gson:gson:2.10.1'
